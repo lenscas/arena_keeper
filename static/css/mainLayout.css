@@ -1,0 +1,8 @@
+#mainPage {
+    height: calc( 100vh - 45px);
+    margin-top: 5px
+}
+
+#mainNav {
+    height: 40px
+}

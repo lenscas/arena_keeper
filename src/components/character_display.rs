@@ -2,7 +2,7 @@
 use yew::prelude::*;
 
 use crate::components::character;
-use crate::components::health_bar::HealthBar;
+use crate::components::health_bar::health_bar;
 use crate::components::health_bar::HealthBarProps;
 
 pub struct CharacterDisplay {
@@ -56,7 +56,7 @@ impl<CTX: 'static> Renderable<CTX, CharacterDisplay> for CharacterDisplay {
 						<div class="row",>
 							<div class="col-md-9",>
 								{
-									HealthBar(
+									health_bar(
 										HealthBarProps {
 											max: self.character.max_health,
 											current:self.character.cur_health,

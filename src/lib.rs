@@ -25,13 +25,18 @@ impl<CTX> Component<CTX> for Model{
 impl<CTX: 'static> Renderable<CTX, Model> for Model{
 	fn view(&self) -> Html<CTX, Self> {
 		html! {
-			<div class="container-fluid",>
-				<div class="row",>
-					<div class="col-md-3",>
-						<CharacterList: />
+			<>
+				<nav class=("navbar","navbar-expand-lg", "navbar-dark", "bg-dark"), id="mainNav",>
+					<span class="navbar-brand",>{"Arena keeper"}</span>	
+				</nav>
+				<div class="container-fluid", id="mainPage",>
+					<div class=("row","h-100"),>
+						<div class=("col-md-3","h-100"),>
+							<CharacterList: />
+						</div>
 					</div>
 				</div>
-			</div>
+			</>
 		}
 	}
 }
