@@ -34,11 +34,11 @@ impl<CTX: 'static> Renderable<CTX, CharacterList> for CharacterList
 {
 	fn view(&self) -> Html<CTX, Self> {
 		html! {
-			<div class="card",>
-				<div class="card-header",>
+			<div class=("card","h-100"),>
+				<div class=("card-header","h-10"),>
 					<NewCharacter: on_buy=Msg::OnBuy,/>
 				</div>
-				<ul class=("list-group","list-item-flush"),>
+				<ul class=("list-group","list-item-flush","h-90", "scrollBar"),>
 					{
 						for(self.characters).iter().map(
 							|character| html! {
