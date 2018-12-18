@@ -2,7 +2,7 @@
 use yew::prelude::*;
 
 use crate::components::character;
-
+use crate::components::health_bar::HealthBar;
 
 pub struct CharacterDisplay {
 	character : character::Character
@@ -43,29 +43,23 @@ impl<CTX: 'static> Component<CTX> for CharacterDisplay {
 
 impl<CTX: 'static> Renderable<CTX, CharacterDisplay> for CharacterDisplay {
 	fn view(&self) -> Html<CTX, Self> {
-		let amount =  self.character.cur_health * 100 / self.character.max_health;// * 100;
-		let width = "width: ".to_owned() + &(amount.to_string()) + "%";
-		let color : &str;
-		if amount > 50 {
-			color = &"bg-success";
-		} else if amount > 20 {
-			color = &"bg-warning";
-		} else {
-			color = &"bg-danger";
-		}
+		let image = self.character.get_image();
 		html! {
 			<li class="list-group-item",>
 				<div class="row",>
 					<div class="col-md-3",>
-						<img class="img-fluid", src={self.character.get_image()},/>
+						<img class="img-fluid",alt={image.1}, src={image.0},/>
 					</div>
 					<div class="col",>
 						<h5>{self.character.name.clone()}</h5>
 						<div class="row",>
 							<div class="col-md-9",>
-								<div class="progress",>
-									<div class=("progress-bar",color), role="progressbar", style={width},/>
-								</div>
+								<HealthBar: 
+									max={self.character.max_health},
+									current={self.character.cur_health},
+									break_yellow={50},
+									break_red={20},
+								/>
 							</div>
 							<div class="col",>
 								{"HP"}

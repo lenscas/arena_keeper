@@ -32,13 +32,13 @@ impl Character {
 			}
 		}
 	}
-	pub fn get_image(&self) -> String {
+	pub fn get_image(&self) -> (String,String){
 		match &self.char_type {
 			CharacterTypes::Merfolk => {
-				"/assets/images/merfolk.png".to_string()
+				("/assets/images/merfolk.png".to_string(), "merfolk".to_string())
 			}
 			CharacterTypes::Human => {
-				"/assets/images/human.png".to_string()
+				("/assets/images/human.png".to_string(), "human".to_string())
 			}
 		}
 	}
