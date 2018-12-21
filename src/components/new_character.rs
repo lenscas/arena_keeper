@@ -5,13 +5,15 @@ use crate::components::character::CharacterTypes;
 
 use yew::prelude::*;
 
+pub type CharWithId = (Character,i64);
 pub struct NewCharacter {
 	money_left: i64,
 	on_buy : Option<Callback<(Character)>>,
+	char_list : Vec<(CharWithId)>
 }
 
 pub enum Msg {
-	BuyChar(Character),
+	BuyChar(i64),
 }
 #[derive(PartialEq, Clone)]
 pub struct Props {
@@ -34,15 +36,37 @@ impl<CTX: 'static> Component<CTX> for NewCharacter {
 		NewCharacter {
 			on_buy: props.on_buy,
 			money_left : 0,
+			char_list : vec![
+				(Character::create_character(CharacterTypes::Human),1),
+				(Character::create_character(CharacterTypes::Merfolk),2),
+				(Character::create_character(CharacterTypes::Human),3)
+			]
 		}
 	}
 	fn update(&mut self, msg: Self::Message, _: &mut Env<CTX, Self>) -> ShouldRender {
 		match msg {
-			Msg::BuyChar(character) => {
-				self.money_left = self.money_left + 1;
-				if let Some(ref mut callback) = self.on_buy {
-					callback.emit(character.clone());
+			Msg::BuyChar(character_id) => {
+				let maybe_char = self.char_list.iter().find(|x| x.1 == character_id);
+				match maybe_char {
+					Some(character) => {
+						self.money_left = self.money_left + 1;
+						if let Some(ref mut callback) = self.on_buy {
+							callback.emit(character.clone().0);
+							let new_list = self.char_list.iter()
+								.cloned()
+								.filter(
+									|x| x.1 != character_id
+								).collect::<Vec<CharWithId>>();
+							self.char_list = vec![];
+							self.char_list.extend(new_list);
+						}
+
+					},
+					None => {
+						
+					}
 				}
+				
 				true
 			},
 		}
@@ -90,9 +114,12 @@ impl NewCharacter {
 							</button>
 						</div>
 						<div class="modal-body",>
-							{self.render_character_selection(CharacterTypes::Human)}
-							{self.render_character_selection(CharacterTypes::Merfolk)}
-							{self.render_character_selection(CharacterTypes::Human)}
+							{
+								for(self.char_list.iter())
+									.map(
+										|character| self.render_character_selection(character.to_owned())
+									)
+							}
 						</div>
 					</div>
 				</div>
@@ -100,14 +127,13 @@ impl NewCharacter {
 		}
 	}
 
-	fn render_character_selection<CTX: 'static>(&self, char_type : CharacterTypes) -> Html<CTX,Self> {
-		let character = Character::create_character(char_type);
-		let image = character.get_image();
-		let name = character.name.clone();
-		let max_health = character.max_health;
-		let cur_health = character.cur_health;
+	fn render_character_selection<CTX: 'static>(&self, character : CharWithId) -> Html<CTX,Self> {
+		let image = character.0.get_image();
+		let name = character.0.name.clone();
+		let max_health = character.0.max_health;
+		let cur_health = character.0.cur_health;
 		html! {
-			<li class="list-group-item", onclick=|_|Msg::BuyChar(character.to_owned()),>
+			<li class="list-group-item", onclick=|_|Msg::BuyChar(character.1),>
 				<div class="row",>
 					<div class="col-md-3",>
 						<img class="img-fluid",alt={image.1}, src={image.0},/>
