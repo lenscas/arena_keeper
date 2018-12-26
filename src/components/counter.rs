@@ -21,17 +21,17 @@ impl Default for Props {
 	}
 }
 
-impl<CTX: 'static> Component<CTX> for Counter {
+impl Component for Counter {
 	type Message = Msg;
 	type Properties = Props;
 
-	fn create(props: Self::Properties, _: &mut Env<CTX, Self>) -> Self {
+	fn create(props: Self::Properties, _: ComponentLink<Self>) -> Self {
 		Counter {
 			clicked: 0,
 			to_add: props.to_add,
 		}
 	}
-	fn update(&mut self, msg: Self::Message, _: &mut Env<CTX, Self>) -> ShouldRender {
+	fn update(&mut self, msg: Self::Message) -> ShouldRender {
 		match msg {
 			Msg::Clicked => {
 				self.clicked = self.clicked + self.to_add;
@@ -42,8 +42,8 @@ impl<CTX: 'static> Component<CTX> for Counter {
 	}
 }
 
-impl<CTX: 'static> Renderable<CTX, Counter> for Counter {
-	fn view(&self) -> Html<CTX, Self> {
+impl Renderable<Counter> for Counter {
+	fn view(&self) -> Html<Self> {
 		html! {
 			<div>
 				<button class="btn", class="btn-success", onclick=|_| Msg::Clicked,>{"Click me!"}</button>

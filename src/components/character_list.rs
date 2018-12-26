@@ -11,16 +11,16 @@ pub struct CharacterList {
 pub enum Msg {
 	OnBuy(character::Character)
 }
-impl<CTX> Component<CTX> for CharacterList
+impl Component for CharacterList
 {
 	type Message = Msg;
 	type Properties = ();
-	fn create(_: Self::Properties, _: &mut Env<CTX, Self>) -> Self {
+	fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
 		CharacterList {
 			characters : LinkedList::new()
 		}
 	}
-	fn update(&mut self, msg: Self::Message, _env: &mut Env<CTX, Self>) -> ShouldRender {
+	fn update(&mut self, msg: Self::Message) -> ShouldRender {
 		match msg {
 			Msg::OnBuy(new_char) => {
 				println!("Did buy!");
@@ -30,9 +30,9 @@ impl<CTX> Component<CTX> for CharacterList
 		}
 	}
 }
-impl<CTX: 'static> Renderable<CTX, CharacterList> for CharacterList
+impl Renderable<CharacterList> for CharacterList
 {
-	fn view(&self) -> Html<CTX, Self> {
+	fn view(&self) -> Html<Self> {
 		html! {
 			<div class=("card","h-100"),>
 				<div class=("card-header","h-10"),>

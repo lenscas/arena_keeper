@@ -1,9 +1,18 @@
+use core::fmt;
+use stdweb::Value;
+use stdweb::unstable::TryInto;
 
-#[derive(PartialEq,Copy,Clone)]
+#[derive(PartialEq,Copy,Clone,Debug)]
 pub enum CharacterTypes {
 	Human,
 	Merfolk
 }
+impl fmt::Display for CharacterTypes {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		fmt::Debug::fmt(self, f)
+	}
+}
+
 #[derive(PartialEq,Clone)]
 pub struct Character {
 	pub char_type : CharacterTypes,
@@ -12,12 +21,21 @@ pub struct Character {
 	pub cur_health : i64
 }
 impl Character {
+	fn create_name(char_type : CharacterTypes) -> String {
+		let as_str = char_type.to_string();
+		let v: Value = js! {
+			return geneateName(@{as_str})
+		};
+		let v : String = v.try_into().expect("Something wend wrong");
+		v
+	}
 	pub fn create_character(char_type : CharacterTypes ) -> Character {
+		let name = Character::create_name(char_type);
 		match char_type {
 			CharacterTypes::Human => {
 				Character {
 					char_type : char_type,
-					name : "Lumaceon".to_string(),
+					name : name,
 					max_health: 1,
 					cur_health : 1
 				}
@@ -25,7 +43,7 @@ impl Character {
 			CharacterTypes::Merfolk => {
 				Character {
 					char_type : char_type,
-					name : "Tyler".to_string(),
+					name : name,
 					max_health: 5,
 					cur_health : 2
 				}
@@ -33,13 +51,9 @@ impl Character {
 		}
 	}
 	pub fn get_image(&self) -> (String,String){
-		match &self.char_type {
-			CharacterTypes::Merfolk => {
-				("/assets/images/merfolk.png".to_string(), "merfolk".to_string())
-			}
-			CharacterTypes::Human => {
-				("/assets/images/human.png".to_string(), "human".to_string())
-			}
-		}
+		(
+			String::from("/assets/images/")+&self.char_type.to_string() +".png",
+			self.char_type.to_string()
+		)
 	}
 }

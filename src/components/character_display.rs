@@ -23,27 +23,27 @@ impl Default for Props {
 	}
 }
 
-impl<CTX: 'static> Component<CTX> for CharacterDisplay {
+impl Component for CharacterDisplay {
 	type Message = Msg;
 	type Properties = Props;
 
-	fn create(props: Self::Properties, _: &mut Env<CTX, Self>) -> Self {
+	fn create(props: Self::Properties,  _: ComponentLink<Self>) -> Self {
 		CharacterDisplay {
 			character : props.is_character
 		}
 	}
-	fn update(&mut self, msg: Self::Message, _: &mut Env<CTX, Self>) -> ShouldRender {
+	fn update(&mut self, msg: Self::Message) -> ShouldRender {
 		match msg {
 		}
 	}
-	fn change(&mut self, props: Self::Properties, _: &mut Env<CTX, Self>) -> ShouldRender {
+	fn change(&mut self, props: Self::Properties) -> ShouldRender {
 		self.character =props.is_character;
 		true
 	}
 }
 
-impl<CTX: 'static> Renderable<CTX, CharacterDisplay> for CharacterDisplay {
-	fn view(&self) -> Html<CTX, Self> {
+impl Renderable<CharacterDisplay> for CharacterDisplay {
+	fn view(&self) -> Html<Self> {
 		let image = self.character.get_image();
 		html! {
 			<li class="list-group-item",>

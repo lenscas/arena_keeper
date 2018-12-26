@@ -2,18 +2,22 @@ use crate::components::health_bar::HealthBarProps;
 use crate::components::health_bar::health_bar;
 use crate::components::character::Character;
 use crate::components::character::CharacterTypes;
-
+use crate::components::ticker::Worker;
+use crate::components::ticker::Request;
 use yew::prelude::*;
 
 pub type CharWithId = (Character,i64);
 pub struct NewCharacter {
 	money_left: i64,
 	on_buy : Option<Callback<(Character)>>,
-	char_list : Vec<(CharWithId)>
+	char_list : Vec<(CharWithId)>,
+	worker: Box<Bridge<Worker>>,
+	last_id : i64
 }
 
 pub enum Msg {
 	BuyChar(i64),
+	DataReceived,
 }
 #[derive(PartialEq, Clone)]
 pub struct Props {
@@ -28,28 +32,38 @@ impl Default for Props {
 	}
 }
 
-impl<CTX: 'static> Component<CTX> for NewCharacter {
+impl Component for NewCharacter {
 	type Message = Msg;
 	type Properties = Props;
 
-	fn create(props: Self::Properties, _: &mut Env<CTX, Self>) -> Self {
+	fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
+		let callback = link.send_back(|_| Msg::DataReceived);
+		let worker = Worker::bridge(callback);
 		NewCharacter {
 			on_buy: props.on_buy,
-			money_left : 0,
+			money_left : 100,
 			char_list : vec![
 				(Character::create_character(CharacterTypes::Human),1),
 				(Character::create_character(CharacterTypes::Merfolk),2),
 				(Character::create_character(CharacterTypes::Human),3)
-			]
+			],
+			worker : worker,
+			last_id : 3
+
 		}
 	}
-	fn update(&mut self, msg: Self::Message, _: &mut Env<CTX, Self>) -> ShouldRender {
+	fn update(&mut self, msg: Self::Message) -> ShouldRender {
+
 		match msg {
 			Msg::BuyChar(character_id) => {
+				self.worker.send(Request::Question(String::from("Hello?")));
+				if self.money_left < 100 {
+					return false;
+				}
 				let maybe_char = self.char_list.iter().find(|x| x.1 == character_id);
 				match maybe_char {
 					Some(character) => {
-						self.money_left = self.money_left + 1;
+						self.money_left = self.money_left - 100;
 						if let Some(ref mut callback) = self.on_buy {
 							callback.emit(character.clone().0);
 							let new_list = self.char_list.iter()
@@ -63,22 +77,31 @@ impl<CTX: 'static> Component<CTX> for NewCharacter {
 
 					},
 					None => {
-						
+
 					}
 				}
-				
 				true
 			},
+			Msg::DataReceived => {
+				if self.money_left < 100 {
+					self.money_left = self.money_left + 50;
+				}
+				if self.char_list.len() < 3 {
+					self.last_id = self.last_id + 1;
+					self.char_list.push( (Character::create_character(CharacterTypes::Human),self.last_id))
+				}
+				true
+			}
 		}
 	}
-	fn change(&mut self, props: Self::Properties, _: &mut Env<CTX, Self>) -> ShouldRender {
+	fn change(&mut self, props: Self::Properties) -> ShouldRender {
 		self.on_buy = props.on_buy;
 		false
 	}
 }
 
-impl<CTX: 'static> Renderable<CTX, NewCharacter> for NewCharacter {
-	fn view(&self) -> Html<CTX, Self> {
+impl Renderable<NewCharacter> for NewCharacter {
+	fn view(&self) -> Html<Self> {
 		html! {
 			<div class="row",>
 				<div class="col",>
@@ -88,8 +111,7 @@ impl<CTX: 'static> Renderable<CTX, NewCharacter> for NewCharacter {
 				</div>
 				<div class="col",>
 					<button
-						class="btn",
-						class="btn-success",
+						class=("btn","btn-success"),
 						data-toggle="modal",
 						data-target="#charSelectModal",
 					>
@@ -102,7 +124,7 @@ impl<CTX: 'static> Renderable<CTX, NewCharacter> for NewCharacter {
 	}
 }
 impl NewCharacter {
-	fn render_modal<CTX: 'static>(&self) -> Html<CTX,Self> {
+	fn render_modal(&self) -> Html<Self> {
 		html! {
 			<div class="modal", tabindex="-1", id="charSelectModal", role="dialog",>
 				<div class="modal-dialog", role="document",>
@@ -127,7 +149,7 @@ impl NewCharacter {
 		}
 	}
 
-	fn render_character_selection<CTX: 'static>(&self, character : CharWithId) -> Html<CTX,Self> {
+	fn render_character_selection(&self, character : CharWithId) -> Html<Self> {
 		let image = character.0.get_image();
 		let name = character.0.name.clone();
 		let max_health = character.0.max_health;

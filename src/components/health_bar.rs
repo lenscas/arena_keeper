@@ -8,7 +8,7 @@ pub struct HealthBarProps {
 	pub break_yellow : i64,
 	pub break_red : i64
 }
-pub fn health_bar<CTX : 'static,Comp: Component<CTX>>(props : HealthBarProps) -> Html<CTX,Comp> {
+pub fn health_bar<Comp: Component>(props : HealthBarProps) -> Html<Comp> {
 	let amount =  props.current * 100 / props.max;// * 100;
 	let width = "width: ".to_owned() + (&amount.to_string()) + "%";
 	let color :  &str ;
@@ -21,7 +21,7 @@ pub fn health_bar<CTX : 'static,Comp: Component<CTX>>(props : HealthBarProps) ->
 	}
 	html! {
 		<div class="progress",>
-			<div 
+			<div
 				class=("progress-bar", color),
 				role="progressbar",
 				style={&width},
