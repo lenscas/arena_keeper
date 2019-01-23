@@ -1,28 +1,26 @@
-
+use crate::components::health_bar::HealthBarProps;
+use crate::components::health_bar::health_bar;
 use yew::prelude::*;
 
-use crate::classes::character;
-use crate::components::health_bar::health_bar;
-use crate::components::health_bar::HealthBarProps;
+use crate::classes::character::Character;
 
 use crate::agents::character_agent::Worker;
-use crate::agents::character_agent::Request;
 use crate::agents::character_agent::Response;
+use crate::agents::character_agent::Request;
 
-pub struct CharacterDisplay {
-	character : Option<character::Character>,
+pub struct CharacterListItem {
+	character_id : i64,
+	character: Option<Character>,
 	worker: Box<Bridge<Worker>>,
-	character_id : i64
 }
-
 pub enum Msg {
-	Update(Response)
+	Response(Response),
+	BuyChar
 }
 #[derive(PartialEq, Clone)]
 pub struct Props {
 	pub character_id: i64
 }
-
 impl Default for Props {
 	fn default() -> Self {
 		Props {
@@ -30,69 +28,72 @@ impl Default for Props {
 		}
 	}
 }
-
-impl Component for CharacterDisplay {
+impl Component for CharacterListItem {
 	type Message = Msg;
 	type Properties = Props;
 
 	fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-		let callback = link.send_back(|res| Msg::Update(res));
+		let callback = link.send_back(|res| Msg::Response(res));
 		let worker = Worker::bridge(callback);
-		let mut char_display = CharacterDisplay {
+		let mut char_item = CharacterListItem {
 			character : None,
 			worker:worker,
-			character_id: props.character_id
+			character_id : props.character_id
 		};
-
-		char_display.worker.send(Request::GetCharacter(char_display.character_id));
-		char_display
+		char_item.worker.send(Request::GetAvailableChar(char_item.character_id));
+		char_item
 	}
 	fn update(&mut self, msg: Self::Message) -> ShouldRender {
 		match msg {
-			Msg::Update(res) => {
-				js!{console.log("in answer?")};
+			Msg::BuyChar => {
+				self.worker.send(Request::BuyCharacter(self.character_id));
+			},
+			Msg::Response(res) => {
 				match res {
-					Response::AnswerSingleChar(chara) => {
+					Response::AnswerSingleChar(character) => {
 
-						self.character = Some(chara);
+						self.character = Some(character);
 					},
 					_default => {
 						unreachable!();
 					}
 				}
+
 			}
 		}
 		true
 	}
 	fn change(&mut self, props: Self::Properties) -> ShouldRender {
 		let old_id = self.character_id;
-		//self.character_id = props.character_id;
-		//self.character = None;
-		//self.worker.send(Request::GetAvailableChar(props.character_id));
-		self.worker.send(Request::SwitchSubscribedCharacter(old_id,props.character_id));
+		self.character_id = props.character_id;
+		self.character = None;
+		self.worker.send(Request::SwitchSubscribedAvailableCharacter(old_id,props.character_id));
 		true
 	}
 }
-
-impl Renderable<CharacterDisplay> for CharacterDisplay {
+impl Renderable<CharacterListItem> for CharacterListItem {
 	fn view(&self) -> Html<Self> {
 		if let Some(character) = &self.character {
 			let image = character.get_image();
+			let name = character.name.clone();
+			let max_health = character.max_health;
+			let cur_health = character.cur_health;
 			return html! {
-				<li class="list-group-item",>
+				<li class="list-group-item", onclick=|_|Msg::BuyChar,>
 					<div class="row",>
 						<div class="col-md-3",>
+							//<h1>{self.character_id}</h1>
 							<img class="img-fluid",alt={image.1}, src={image.0},/>
 						</div>
 						<div class="col",>
-							<h5>{character.name.clone()}</h5>
+							<h5>{name.clone()}</h5>
 							<div class="row",>
 								<div class="col-md-9",>
 									{
 										health_bar(
 											HealthBarProps {
-												max: character.max_health,
-												current:character.cur_health,
+												max: max_health,
+												current: cur_health,
 												break_yellow:50,
 												break_red:20,
 											}
@@ -103,14 +104,15 @@ impl Renderable<CharacterDisplay> for CharacterDisplay {
 									{"HP"}
 								</div>
 							</div>
+							<div class="row",>
+								<p>{"This is a nice description of this race"}</p>
+							</div>
 						</div>
 					</div>
+
 				</li>
 			}
 		}
-		return html! {
-			<div>{self.character_id}</div>
-		}
-
+		return html!{<div></div>}
 	}
 }

@@ -8,7 +8,9 @@ extern crate yew;
 
 use yew::prelude::*;
 
-mod components;
+pub mod components;
+pub mod agents;
+pub mod classes;
 
 use crate::components::character_list::CharacterList;
 

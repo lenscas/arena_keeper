@@ -6,8 +6,8 @@ use std::collections::HashSet;
 
 pub struct Worker {
     link: AgentLink<Worker>,
-    interval: IntervalService,
-    task: Box<Task>,
+    _interval: IntervalService,
+    _task: Box<Task>,
     update_count : i64,
     component_list : HashSet<HandlerId>
 }
@@ -35,7 +35,7 @@ impl Agent for Worker {
     // - `Job` (one per bridge)
     // - `Context` (shared in the same thread)
     // - `Public` (separate thread).
-    type Reach = Context; // Spawn only one instance per thread (all components could reach this)
+    type Reach = Public; // Spawn only one instance per thread (all components could reach this)
     type Message = Msg;
     type Input = Request;
     type Output = Response;
@@ -46,13 +46,10 @@ impl Agent for Worker {
         let duration = Duration::from_secs(3);
         let callback = link.send_back(|_| Msg::Updating);
         let task = interval.spawn(duration, callback);
-        js! {
-            console.log("I AM CREATED!")
-        };
         Worker {
             link,
-            interval,
-            task: Box::new(task),
+            _interval : interval,
+            _task: Box::new(task),
             update_count:0,
             component_list : HashSet::new(),
         }
@@ -68,15 +65,12 @@ impl Agent for Worker {
                 for sub in self.component_list.iter(){
                     self.link.response(*sub, Response::Answer(self.update_count));
                 }
-                js! {
-                    console.log("Awesome!")
-                };
             }
         }
      }
 
     // Handle incoming messages from components of other agents.
-    fn handle(&mut self, msg: Self::Input, who: HandlerId) {
+    fn handle(&mut self, msg: Self::Input, _who: HandlerId) {
         match msg {
             Request::Question(_) => {
                 js! {

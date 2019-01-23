@@ -3,7 +3,6 @@ extern crate yew;
 
 
 use yew::prelude::*;
-use yew::services::console::ConsoleService;
 
 use arena_keeper::Model;
 
