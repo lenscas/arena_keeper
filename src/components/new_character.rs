@@ -1,22 +1,22 @@
-use crate::agents::ticker::Worker;
-use crate::agents::ticker::Request;
 use crate::agents::character_agent;
+use crate::agents::money_agent;
+
 use crate::components::new_character_list_item::CharacterListItem;
 use crate::classes::character::Character;
+
 use yew::prelude::*;
 
 pub type CharWithId = (Character,i64);
 pub struct NewCharacter {
 	money_left: i64,
 	char_list : Vec<(i64)>,
-	worker: Box<Bridge<Worker>>,
+	_money_worker: Box<Bridge<money_agent::Worker>>,
 	char_worker: Box<Bridge<character_agent::Worker>>,
 }
 
 pub enum Msg {
-	BuyChar(i64),
 	GetList(character_agent::Response),
-	DataReceived,
+	NewMoney(money_agent::Response),
 }
 #[derive(PartialEq, Clone)]
 pub struct Props {}
@@ -33,15 +33,15 @@ impl Component for NewCharacter {
 	type Properties = Props;
 
 	fn create(_props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-		let callback = link.send_back(|_| Msg::DataReceived);
-		let worker = Worker::bridge(callback);
 
+		let money_callback = link.send_back(|res| Msg::NewMoney(res));
+		let money_worker = money_agent::Worker::bridge(money_callback);
 		let character_agent_callback = link.send_back(|ids| Msg::GetList(ids));
 		let character_worker = character_agent::Worker::bridge(character_agent_callback);
 		let mut new_char = NewCharacter {
-			money_left : 100,
+			money_left : 0,
 			char_list : vec![],
-			worker : worker,
+			_money_worker: money_worker,
 			char_worker : character_worker
 
 		};
@@ -51,14 +51,6 @@ impl Component for NewCharacter {
 	fn update(&mut self, msg: Self::Message) -> ShouldRender {
 
 		match msg {
-			Msg::BuyChar(character_id) => {
-				self.worker.send(Request::Question(String::from("Hello?")));
-				if self.money_left < 100 {
-					return false;
-				}
-				self.char_worker.send(character_agent::Request::BuyCharacter(character_id));
-				false
-			},
 			Msg::GetList(action) => {
 				match action {
 					character_agent::Response::AnswerIdList(list) => {
@@ -71,14 +63,14 @@ impl Component for NewCharacter {
 					}
 				}
 				true
-
-
 			}
-			Msg::DataReceived => {
-				if self.money_left < 100 {
-					self.money_left = self.money_left + 50;
+			Msg::NewMoney(res) => {
+				match res {
+					money_agent::Response::NewAmount(money) => {
+						self.money_left = money;
+						true
+					}
 				}
-				true
 			}
 		}
 	}

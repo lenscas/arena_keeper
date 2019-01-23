@@ -8,14 +8,18 @@ use crate::agents::character_agent::Worker;
 use crate::agents::character_agent::Response;
 use crate::agents::character_agent::Request;
 
+use crate::agents::money_agent;
+
 pub struct CharacterListItem {
 	character_id : i64,
 	character: Option<Character>,
 	worker: Box<Bridge<Worker>>,
+	money_worker: Box<Bridge<money_agent::Worker>>
 }
 pub enum Msg {
 	Response(Response),
-	BuyChar
+	BuyChar,
+	Money
 }
 #[derive(PartialEq, Clone)]
 pub struct Props {
@@ -35,10 +39,14 @@ impl Component for CharacterListItem {
 	fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 		let callback = link.send_back(|res| Msg::Response(res));
 		let worker = Worker::bridge(callback);
+
+		let mon_callback = link.send_back(|_| Msg::Money);
+		let mon_worker = money_agent::Worker::bridge(mon_callback);
 		let mut char_item = CharacterListItem {
 			character : None,
 			worker:worker,
-			character_id : props.character_id
+			character_id : props.character_id,
+			money_worker: mon_worker
 		};
 		char_item.worker.send(Request::GetAvailableChar(char_item.character_id));
 		char_item
@@ -46,8 +54,9 @@ impl Component for CharacterListItem {
 	fn update(&mut self, msg: Self::Message) -> ShouldRender {
 		match msg {
 			Msg::BuyChar => {
-				self.worker.send(Request::BuyCharacter(self.character_id));
+				self.money_worker.send(money_agent::Request::BuyCharacter(self.character_id));
 			},
+
 			Msg::Response(res) => {
 				match res {
 					Response::AnswerSingleChar(character) => {
@@ -58,6 +67,8 @@ impl Component for CharacterListItem {
 						unreachable!();
 					}
 				}
+			},
+			Msg::Money => {
 
 			}
 		}
