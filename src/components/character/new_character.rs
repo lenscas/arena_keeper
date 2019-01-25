@@ -1,15 +1,15 @@
+use crate::agents::character_agent::CharacterId;
 use crate::agents::character_agent;
 use crate::agents::money_agent;
 
-use crate::components::new_character_list_item::CharacterListItem;
-use crate::classes::character::Character;
+use crate::components::character::new_character_list_item::CharacterListItem;
+//use crate::classes::character::Character;
 
 use yew::prelude::*;
 
-pub type CharWithId = (Character,i64);
 pub struct NewCharacter {
 	money_left: i64,
-	char_list : Vec<(i64)>,
+	char_list : Vec<(CharacterId)>,
 	_money_worker: Box<Bridge<money_agent::Worker>>,
 	char_worker: Box<Bridge<character_agent::Worker>>,
 }
@@ -54,8 +54,6 @@ impl Component for NewCharacter {
 			Msg::GetList(action) => {
 				match action {
 					character_agent::Response::AnswerIdList(list) => {
-						let len = list.len().to_string();
-						js!{console.log(@{len})}
 						self.char_list = list;
 					},
 					_default => {

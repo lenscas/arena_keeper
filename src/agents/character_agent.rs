@@ -4,25 +4,28 @@ use std::collections::HashMap;
 use yew::prelude::worker::*;
 use std::collections::HashSet;
 
+#[derive(Copy,Clone, PartialEq, Eq, Hash,Serialize, Deserialize, Debug)]
+pub struct CharacterId(pub u64);
+
 pub struct Worker {
     link: AgentLink<Worker>,
     component_list : HashSet<HandlerId>,
 	subbed_to_char_list : HashSet<HandlerId>,
-	subbed_to_single_char : HashMap<i64,HashSet<HandlerId>>,
-    subbed_to_single_available_char : HashMap<i64,HashSet<HandlerId>>,
+	subbed_to_single_char : HashMap<CharacterId,HashSet<HandlerId>>,
+    subbed_to_single_available_char : HashMap<CharacterId,HashSet<HandlerId>>,
     subbed_to_available_list : HashSet<HandlerId>,
-	chosen_characters : HashMap<i64,Character>,
-	to_be_chosen : HashMap<i64,Character>
+	chosen_characters : HashMap<CharacterId,Character>,
+	to_be_chosen : HashMap<CharacterId,Character>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Request {
-    SwitchSubscribedAvailableCharacter(i64,i64),
-    SwitchSubscribedCharacter(i64,i64),
-    UpdateCharacter(i64,Character),
-    BuyCharacter(i64),
-    GetCharacter(i64),
-    GetAvailableChar(i64),
+    SwitchSubscribedAvailableCharacter(CharacterId,CharacterId),
+    SwitchSubscribedCharacter(CharacterId,CharacterId),
+    UpdateCharacter(CharacterId,Character),
+    BuyCharacter(CharacterId),
+    GetCharacter(CharacterId),
+    GetAvailableChar(CharacterId),
     GetIdList,
     GetAvailableList,
 }
@@ -32,7 +35,7 @@ impl Transferable for Request { }
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Answer,
-    AnswerIdList(Vec<i64>),
+    AnswerIdList(Vec<CharacterId>),
     AnswerSingleChar(Character)
 }
 
@@ -64,9 +67,9 @@ impl Agent for Worker {
             subbed_to_available_list : HashSet::new(),
             subbed_to_single_available_char : HashMap::new()
 		};
-		agent.to_be_chosen.insert(4, Character::create_character(CharacterTypes::Human));
-		agent.to_be_chosen.insert(2, Character::create_character(CharacterTypes::Merfolk));
-		agent.to_be_chosen.insert(3, Character::create_character(CharacterTypes::Merfolk));
+		agent.to_be_chosen.insert(CharacterId { 0:1}, Character::create_character(CharacterTypes::Human));
+		agent.to_be_chosen.insert(CharacterId { 0:2}, Character::create_character(CharacterTypes::Merfolk));
+		agent.to_be_chosen.insert(CharacterId { 0:3}, Character::create_character(CharacterTypes::Merfolk));
         agent
     }
     fn connected(&mut self , id: HandlerId){
@@ -104,25 +107,10 @@ impl Agent for Worker {
                 let m_chara = self.chosen_characters.get_mut(&char_id);
                 if let Some(chara) = m_chara {
                     *chara = new_character;
-                    let temp_char = &Character::create_character(
-                        CharacterTypes::Human
-                    );
-                    let chara = &self.chosen_characters
-                        .get(&char_id)
-                        .unwrap_or_else(|| temp_char ).name;
-                    js!{
-                        console.log(@{chara})
-                    };
                 }
             },
             Request::BuyCharacter(id) => {
-                js!{
-                    console.log("in buy before? test", @{id.to_string()})
-                };
                 let m_chara = self.to_be_chosen.remove(&id);
-                js!{
-                    console.log("in buy after?", @{id.to_string()})
-                };
                 if let Some(chara) = m_chara {
                     self.chosen_characters.insert(id, chara);
                     self.update_char_list(&self.subbed_to_available_list, &self.to_be_chosen);
@@ -133,7 +121,7 @@ impl Agent for Worker {
                 let as_vec = self.chosen_characters
                     .iter()
                     .map( |v| v.0.to_owned() )
-                    .collect::<Vec<i64>>();
+                    .collect::<Vec<CharacterId>>();
                 self.link.response(who, Response::AnswerIdList(as_vec));
                 self.subbed_to_char_list.insert(who);
             },
@@ -149,7 +137,7 @@ impl Agent for Worker {
                 let as_vec = self.to_be_chosen
                     .iter()
                     .map( |v| v.0.to_owned() )
-                    .collect::<Vec<i64>>();
+                    .collect::<Vec<CharacterId>>();
                 self.link.response(who, Response::AnswerIdList(as_vec));
                 self.subbed_to_available_list.insert(who);
             },
@@ -167,9 +155,9 @@ impl Agent for Worker {
     fn name_of_resource() -> &'static str { "bin/native_worker.js" }
 }
 impl Worker {
-    fn switch_subscibed_char(&mut self, sub : &HandlerId, old_char_id : &i64, new_char_id : &i64,use_available : bool) {
-        let sub_list : &mut HashMap<i64,HashSet<HandlerId>>;
-        let char_list : & HashMap<i64,Character>;
+    fn switch_subscibed_char(&mut self, sub : &HandlerId, old_char_id : &CharacterId, new_char_id : &CharacterId,use_available : bool) {
+        let sub_list : &mut HashMap<CharacterId,HashSet<HandlerId>>;
+        let char_list : & HashMap<CharacterId,Character>;
         if use_available {
             sub_list = &mut self.subbed_to_single_available_char;
             char_list = &self.to_be_chosen;
@@ -184,20 +172,20 @@ impl Worker {
         sub_list.entry(new_char_id.to_owned()).or_insert(HashSet::new()).insert(sub.to_owned());
         self.respond_with_single_char(sub, &new_char_id, &char_list);
     }
-    fn respond_with_single_char(&self, sub :&HandlerId, char_id : &i64, id_list : &HashMap<i64,Character>) {
+    fn respond_with_single_char(&self, sub :&HandlerId, char_id : &CharacterId, id_list : &HashMap<CharacterId,Character>) {
         let m_chara = id_list.get(char_id);
         if let Some(chara) = m_chara {
             self.link.response(sub.to_owned(), Response::AnswerSingleChar(chara.clone()));
         }
     }
-    fn send_list(&self,sub : &HandlerId, id_list : &HashMap<i64,Character>){
+    fn send_list(&self,sub : &HandlerId, id_list : &HashMap<CharacterId,Character>){
         let as_vec = id_list
             .iter()
             .map( |v| v.0.to_owned() )
-            .collect::<Vec<i64>>();
+            .collect::<Vec<CharacterId>>();
         self.link.response(sub.to_owned(), Response::AnswerIdList(as_vec));
     }
-    fn update_char_list(&self, sub_list : &HashSet<HandlerId>, id_list : &HashMap<i64,Character>){
+    fn update_char_list(&self, sub_list : &HashSet<HandlerId>, id_list : &HashMap<CharacterId,Character>){
         for sub in sub_list.iter() {
             self.send_list(sub, id_list);
         }

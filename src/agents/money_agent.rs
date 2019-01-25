@@ -14,7 +14,7 @@ pub struct Worker {
 pub enum Request {
 	SubtractAmount(i64),
 	AddAmount(i64),
-	BuyCharacter(i64)
+	BuyCharacter(character_agent::CharacterId)
 }
 
 impl Transferable for Request {}
@@ -42,7 +42,6 @@ impl Agent for Worker {
 
 	// Create an instance with a link to agent's environment.
 	fn create(link: AgentLink<Self>) -> Self {
-		info!("in create");
 		let character_agent_callback = link.send_back(|_| Msg::Res);
 		let character_worker = character_agent::Worker::bridge(character_agent_callback);
 		Worker {
@@ -67,7 +66,6 @@ impl Agent for Worker {
 			},
 			Request::SubtractAmount(to_subtract) => {
 				self.money = self.money - to_subtract;
-				info!("in substract");
 			},
 			Request::BuyCharacter(char_id) => {
 				if self.money < 100 {
@@ -77,7 +75,6 @@ impl Agent for Worker {
 				self.char_worker.send(character_agent::Request::BuyCharacter(char_id));
 			}
 		};
-		info!("send update to all");
 		self.update_all();
 	}
 }

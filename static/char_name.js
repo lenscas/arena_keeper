@@ -25,7 +25,6 @@ let types = {
 	]
 }
 function geneateName(type){
-	console.log(type)
 	let possibles = types[type.toLowerCase()]
 	if(!possibles){
 		possibles = [

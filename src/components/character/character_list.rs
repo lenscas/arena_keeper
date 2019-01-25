@@ -1,13 +1,14 @@
+use crate::agents::character_agent::CharacterId;
 use yew::prelude::*;
 
-use crate::components::new_character::NewCharacter;
-use crate::components::character_display::CharacterDisplay;
+use crate::components::character::new_character::NewCharacter;
+use crate::components::character::character_display::CharacterDisplay;
 use crate::agents::character_agent::Worker;
 use crate::agents::character_agent::Request;
 use crate::agents::character_agent::Response;
 
 pub struct CharacterList {
-	characters : Vec<i64>,
+	characters : Vec<CharacterId>,
 	worker: Box<Bridge<Worker>>,
 }
 
@@ -47,7 +48,6 @@ impl Component for CharacterList
 impl Renderable<CharacterList> for CharacterList
 {
 	fn view(&self) -> Html<Self> {
-		js!{console.log("RERENDER!")}
 		html! {
 			<div class=("card","h-100"),>
 				<div class=("card-header","h-10"),>
@@ -56,8 +56,8 @@ impl Renderable<CharacterList> for CharacterList
 				<ul class=("list-group","list-item-flush","h-90", "scrollBar"),>
 					{
 						for(self.characters).iter().map(
-							|character_id| return html! {
-								<CharacterDisplay: character_id=character_id,/>
+							|char_id| return html! {
+								<CharacterDisplay: character_id=char_id,/>
 							}
 						)
 					}

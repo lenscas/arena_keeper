@@ -1,5 +1,6 @@
-use crate::components::health_bar::HealthBarProps;
-use crate::components::health_bar::health_bar;
+use crate::agents::character_agent::CharacterId;
+use crate::components::character::health_bar::HealthBarProps;
+use crate::components::character::health_bar::health_bar;
 use yew::prelude::*;
 
 use crate::classes::character::Character;
@@ -11,7 +12,7 @@ use crate::agents::character_agent::Request;
 use crate::agents::money_agent;
 
 pub struct CharacterListItem {
-	character_id : i64,
+	character_id : CharacterId,
 	character: Option<Character>,
 	worker: Box<Bridge<Worker>>,
 	money_worker: Box<Bridge<money_agent::Worker>>
@@ -23,12 +24,12 @@ pub enum Msg {
 }
 #[derive(PartialEq, Clone)]
 pub struct Props {
-	pub character_id: i64
+	pub character_id: CharacterId
 }
 impl Default for Props {
 	fn default() -> Self {
 		Props {
-			character_id: 0
+			character_id: CharacterId {0:0}
 		}
 	}
 }
@@ -93,7 +94,7 @@ impl Renderable<CharacterListItem> for CharacterListItem {
 				<li class="list-group-item", onclick=|_|Msg::BuyChar,>
 					<div class="row",>
 						<div class="col-md-3",>
-							//<h1>{self.character_id}</h1>
+							//<h1>{self.CharacterId}</h1>
 							<img class="img-fluid",alt={image.1}, src={image.0},/>
 						</div>
 						<div class="col",>

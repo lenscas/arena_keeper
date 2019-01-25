@@ -73,9 +73,6 @@ impl Agent for Worker {
     fn handle(&mut self, msg: Self::Input, _who: HandlerId) {
         match msg {
             Request::Question(_) => {
-                js! {
-                    console.log("Got something?");
-                }
                 //self.link.response(who, Response::Answer("That's cool!".into()));
             },
         }

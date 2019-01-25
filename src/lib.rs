@@ -1,3 +1,5 @@
+#![recursion_limit="128"]
+
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -8,13 +10,14 @@ extern crate serde_derive;
 #[macro_use]
 extern crate yew;
 
+use crate::components::arena::arena_container::Arena;
 use yew::prelude::*;
 
 pub mod components;
 pub mod agents;
 pub mod classes;
 
-use crate::components::character_list::CharacterList;
+use crate::components::character::character_list::CharacterList;
 
 pub struct Model {}
 
@@ -42,6 +45,9 @@ impl Renderable<Model> for Model{
 					<div class=("row","h-100"),>
 						<div class=("col-md-3","h-100"),>
 							<CharacterList: />
+						</div>
+						<div class=("col-md-9","h-100"),>
+							<Arena: />
 						</div>
 					</div>
 				</div>
