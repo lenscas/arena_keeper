@@ -5,6 +5,8 @@ authors = ["lenscas <lenscas@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+log = "0.4"
+web_logger = "0.1"
 yew = { git = "https://github.com/DenisKolodin/yew.git" }
 stdweb = "0.4"
 serde = "1.0"

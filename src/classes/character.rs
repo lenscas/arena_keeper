@@ -2,7 +2,7 @@ use core::fmt;
 use stdweb::Value;
 use stdweb::unstable::TryInto;
 
-#[derive(PartialEq,Copy,Clone,Debug)]
+#[derive(PartialEq,Copy,Clone,Debug,Serialize,Deserialize)]
 pub enum CharacterTypes {
 	Human,
 	Merfolk
@@ -13,7 +13,7 @@ impl fmt::Display for CharacterTypes {
 	}
 }
 
-#[derive(PartialEq,Clone)]
+#[derive(PartialEq,Clone,Serialize, Deserialize,Debug)]
 pub struct Character {
 	pub char_type : CharacterTypes,
 	pub name : String,
