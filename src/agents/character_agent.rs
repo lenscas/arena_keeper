@@ -25,6 +25,7 @@ pub enum Request {
     UpdateCharacter(CharacterId,Character),
     BuyCharacter(CharacterId),
     GetCharacter(CharacterId),
+    GetDoubleCharacter( (CharacterId,CharacterId)),
     GetAvailableChar(CharacterId),
     GetIdList,
     GetAvailableList,
@@ -36,7 +37,8 @@ impl Transferable for Request { }
 pub enum Response {
     Answer,
     AnswerIdList(Vec<CharacterId>),
-    AnswerSingleChar(Character)
+    AnswerSingleChar(Character,CharacterId),
+    AnswerDoubleChar((CharacterId,Character),((CharacterId,Character)))
 }
 
 impl Transferable for Response { }
@@ -128,7 +130,7 @@ impl Agent for Worker {
             Request::GetCharacter(char_id) => {
                 let m_chara = self.chosen_characters.get(&char_id);
                 if let Some(chara) = m_chara {
-                    self.link.response(who, Response::AnswerSingleChar(chara.clone()));
+                    self.link.response(who, Response::AnswerSingleChar(chara.clone(),char_id));
                     let map = self.subbed_to_single_char.entry(char_id).or_insert(HashSet::new());
                     map.insert(who);
                 }
@@ -144,9 +146,22 @@ impl Agent for Worker {
             Request::GetAvailableChar(char_id) => {
                 let m_chara = self.to_be_chosen.get(&char_id);
                 if let Some(chara) = m_chara {
-                    self.link.response(who, Response::AnswerSingleChar(chara.clone()));
+                    self.link.response(who, Response::AnswerSingleChar(chara.clone(),char_id));
                     let map = self.subbed_to_single_available_char.entry(char_id).or_insert(HashSet::new());
                     map.insert(who);
+                }
+            },
+            Request::GetDoubleCharacter(char_ids) => {
+                let char1_id = char_ids.0;
+                let char2_id = char_ids.1;
+                if let Some(char1) = self.chosen_characters.get(&char1_id) {
+                    if let Some(char2) =  self.chosen_characters.get(&char2_id) {
+                        let res_char1 = (char1_id,char1.clone());
+                        let res_char2 = (char2_id,char2.clone());
+                        self.link.response(who, Response::AnswerDoubleChar(res_char1,res_char2));
+                        self.subbed_to_single_char.entry(char1_id).or_default().insert(who);
+                        self.subbed_to_single_char.entry(char2_id).or_default().insert(who);
+                    }
                 }
             }
 
@@ -175,7 +190,7 @@ impl Worker {
     fn respond_with_single_char(&self, sub :&HandlerId, char_id : &CharacterId, id_list : &HashMap<CharacterId,Character>) {
         let m_chara = id_list.get(char_id);
         if let Some(chara) = m_chara {
-            self.link.response(sub.to_owned(), Response::AnswerSingleChar(chara.clone()));
+            self.link.response(sub.to_owned(), Response::AnswerSingleChar(chara.clone(),*char_id));
         }
     }
     fn send_list(&self,sub : &HandlerId, id_list : &HashMap<CharacterId,Character>){

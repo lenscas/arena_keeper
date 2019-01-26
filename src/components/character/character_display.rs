@@ -60,7 +60,7 @@ impl Component for CharacterDisplay {
 		match msg {
 			Msg::Update(res) => {
 				match res {
-					Response::AnswerSingleChar(chara) => {
+					Response::AnswerSingleChar(chara,_) => {
 
 						self.character = Some(chara);
 					},

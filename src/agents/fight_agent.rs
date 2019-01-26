@@ -6,14 +6,17 @@ use yew::prelude::worker::*;
 use crate::classes::fight::Fight;
 
 #[derive(Copy,Clone, PartialEq, Eq, Hash,Serialize, Deserialize, Debug)]
-pub struct FightId(u64);
+pub struct FightId(pub u64);
 
 pub struct Worker {
 	link: AgentLink<Worker>,
 	component_list: HashSet<HandlerId>,
-	_fights: HashMap<FightId,Fight>,
+	fights: HashMap<FightId,Fight>,
 	selected_fighters : (Option<CharacterId>,Option<CharacterId>),
-	subbed_to_selected_fighters : HashMap<u8,HashSet<HandlerId>>
+	subbed_to_selected_fighters : HashMap<u8,HashSet<HandlerId>>,
+	subbed_to_fight : HashMap<FightId,HashSet<HandlerId>>,
+	subbed_to_fight_list : HashSet<HandlerId>,
+	current_id : u64
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -29,7 +32,9 @@ impl Transferable for Request {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
-	UpdateFighter(Option<CharacterId>)
+	UpdateFighter(Option<CharacterId>),
+	UpdateFight(Fight),
+	UpdateFightList(Vec<FightId>)
 }
 
 impl Transferable for Response {}
@@ -53,9 +58,12 @@ impl Agent for Worker {
 		Worker {
 			link,
 			component_list: HashSet::new(),
-			_fights: HashMap::new(),
+			fights: HashMap::new(),
+			current_id : 0,
 			selected_fighters: (None,None),
-			subbed_to_selected_fighters : HashMap::new()
+			subbed_to_selected_fighters : HashMap::new(),
+			subbed_to_fight : HashMap::new(),
+			subbed_to_fight_list : HashSet::new()
 		}
 	}
 	fn connected(&mut self, id: HandlerId) {
@@ -84,13 +92,34 @@ impl Agent for Worker {
 					self.send_update_fighter(1);
 				}
 			},
-			Request::CreateFight(_lethal_chance) => {
+			Request::CreateFight(lethal_chance) => {
+				if let Some(fighter1) = self.selected_fighters.0 {
+					if let Some(fighter2) = self.selected_fighters.1 {
+						let mut fight = Fight::new(lethal_chance, (fighter1,fighter2));
+						self.current_id = self.current_id + 1;
+						if self.fights.len() == 0 {
+							fight.start();
+						}
+						self.fights.insert(FightId {0:self.current_id}, fight);
+						for v in self.subbed_to_fight_list.iter() {
+							self.link.response(*v, Response::UpdateFightList(self.create_fight_id_vec()))
+						}
+					}
+				}
 			},
-			Request::GetFight(_fight) => {
-
+			Request::GetFight(fight_id) => {
+				let maybe_fight = self.fights.get(&fight_id);
+				if let Some(fight) = maybe_fight {
+					self.link.response(who, Response::UpdateFight(fight.to_owned()));
+					self.subbed_to_fight.entry(fight_id).or_default().insert(who);
+				}
 			},
 			Request::GetAllFights => {
-
+				self.link.response(
+					who,
+					Response::UpdateFightList(self.create_fight_id_vec())
+				);
+				self.subbed_to_fight_list.insert(who);
 			},
 			Request::GetReadyFighter(i) => {
 				info!("{}", i);
@@ -113,9 +142,15 @@ impl Worker {
 		} else {
 			self.selected_fighters.1
 		};
-		for v in self.subbed_to_selected_fighters.entry(side).or_default().iter(){
-
+		for v in self.subbed_to_selected_fighters.entry(side).or_default().iter() {
 			self.link.response(*v, Response::UpdateFighter(fighter));
 		};
+	}
+	fn create_fight_id_vec(&self) -> Vec<FightId> {
+		self.fights.iter()
+			.map(
+				|v| v.0.to_owned()
+			)
+			.collect::<Vec<FightId>>()
 	}
 }

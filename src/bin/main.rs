@@ -1,3 +1,4 @@
+#![recursion_limit="512"]
 extern crate arena_keeper;
 extern crate yew;
 extern crate web_logger;

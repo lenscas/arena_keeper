@@ -72,13 +72,16 @@ impl Component for SideCharDisplay
 							self.character = None;
 						}
 						self.char_id = new_char;
+					},
+					_ => {
+						unreachable!();
 					}
 				}
 				true
 			},
 			Msg::UpdateCharacter(res) => {
 				match res {
-					character_agent::Response::AnswerSingleChar(new_char) => {
+					character_agent::Response::AnswerSingleChar(new_char,_) => {
 						self.character = Some(new_char);
 						true
 					},

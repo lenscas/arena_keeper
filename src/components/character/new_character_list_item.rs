@@ -60,7 +60,7 @@ impl Component for CharacterListItem {
 
 			Msg::Response(res) => {
 				match res {
-					Response::AnswerSingleChar(character) => {
+					Response::AnswerSingleChar(character,_) => {
 
 						self.character = Some(character);
 					},

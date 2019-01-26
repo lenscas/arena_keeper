@@ -1,3 +1,4 @@
+use crate::components::arena::fight_item::FightItem;
 use crate::components::arena::fight_creation_char_display::SideCharDisplay;
 use crate::agents::fight_agent;
 use stdweb::traits::IEvent;
@@ -5,7 +6,7 @@ use yew::prelude::*;
 use std::str::FromStr;
 
 pub struct Arena {
-	_fights : Vec<i64>,
+	fights : Vec<fight_agent::FightId>,
 	worker: Box<Bridge<fight_agent::Worker>>,
 	lethal_chance: u64
 }
@@ -32,16 +33,27 @@ impl Component for Arena
 	fn create(_props: Self::Properties, mut link:  ComponentLink<Self>) -> Self {
 		let callback = link.send_back(|res| Msg::UpdateFights(res));
 		let worker = fight_agent::Worker::bridge(callback);
-		Arena {
-			_fights : Vec::new(),
+
+		let mut ar = Arena {
+			fights : Vec::new(),
 			lethal_chance : 0,
 			worker
-		}
+		};
+		ar.worker.send(fight_agent::Request::GetAllFights);
+		ar
 	}
 	fn update(&mut self, msg: Self::Message) -> ShouldRender {
 		match msg {
-			Msg::UpdateFights(_res) => {
-				true
+			Msg::UpdateFights(res) => {
+				match res {
+					fight_agent::Response::UpdateFightList(list) => {
+						self.fights = list;
+						true
+					},
+					_ => {
+						unreachable!();
+					}
+				}
 			},
 			Msg::UpdateLethalChance(lethal_chance) => {
 				self.lethal_chance = lethal_chance;
@@ -68,6 +80,11 @@ impl Renderable<Arena> for Arena
 				</div>
 				<ul class=("list-group","list-item-flush","h-90", "scrollBar"),>
 					{self.render_fight_planner()}
+					{for(self.fights).iter().map(
+						|v| return html! {
+							<FightItem: fight_id=v ,/>
+						}
+					)}
 				</ul>
 			</div>
 		}
