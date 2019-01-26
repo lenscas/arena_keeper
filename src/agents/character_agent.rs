@@ -1,6 +1,7 @@
 use crate::classes::character::Character;
 use crate::classes::character::CharacterTypes;
 use std::collections::HashMap;
+use indexmap::IndexMap;
 use yew::prelude::worker::*;
 use std::collections::HashSet;
 
@@ -11,11 +12,11 @@ pub struct Worker {
     link: AgentLink<Worker>,
     component_list : HashSet<HandlerId>,
 	subbed_to_char_list : HashSet<HandlerId>,
-	subbed_to_single_char : HashMap<CharacterId,HashSet<HandlerId>>,
+	subbed_to_single_char :HashMap<CharacterId,HashSet<HandlerId>>,
     subbed_to_single_available_char : HashMap<CharacterId,HashSet<HandlerId>>,
     subbed_to_available_list : HashSet<HandlerId>,
-	chosen_characters : HashMap<CharacterId,Character>,
-	to_be_chosen : HashMap<CharacterId,Character>
+	chosen_characters : IndexMap<CharacterId,Character>,
+	to_be_chosen : IndexMap<CharacterId,Character>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -64,8 +65,8 @@ impl Agent for Worker {
             component_list : HashSet::new(),
 			subbed_to_char_list : HashSet::new(),
 			subbed_to_single_char : HashMap::new(),
-			chosen_characters : HashMap::new(),
-			to_be_chosen : HashMap::new(),
+			chosen_characters : IndexMap::new(),
+			to_be_chosen : IndexMap::new(),
             subbed_to_available_list : HashSet::new(),
             subbed_to_single_available_char : HashMap::new()
 		};
@@ -172,7 +173,7 @@ impl Agent for Worker {
 impl Worker {
     fn switch_subscibed_char(&mut self, sub : &HandlerId, old_char_id : &CharacterId, new_char_id : &CharacterId,use_available : bool) {
         let sub_list : &mut HashMap<CharacterId,HashSet<HandlerId>>;
-        let char_list : & HashMap<CharacterId,Character>;
+        let char_list : & IndexMap<CharacterId,Character>;
         if use_available {
             sub_list = &mut self.subbed_to_single_available_char;
             char_list = &self.to_be_chosen;
@@ -187,20 +188,20 @@ impl Worker {
         sub_list.entry(new_char_id.to_owned()).or_insert(HashSet::new()).insert(sub.to_owned());
         self.respond_with_single_char(sub, &new_char_id, &char_list);
     }
-    fn respond_with_single_char(&self, sub :&HandlerId, char_id : &CharacterId, id_list : &HashMap<CharacterId,Character>) {
+    fn respond_with_single_char(&self, sub :&HandlerId, char_id : &CharacterId, id_list : &IndexMap<CharacterId,Character>) {
         let m_chara = id_list.get(char_id);
         if let Some(chara) = m_chara {
             self.link.response(sub.to_owned(), Response::AnswerSingleChar(chara.clone(),*char_id));
         }
     }
-    fn send_list(&self,sub : &HandlerId, id_list : &HashMap<CharacterId,Character>){
+    fn send_list(&self,sub : &HandlerId, id_list : &IndexMap<CharacterId,Character>){
         let as_vec = id_list
             .iter()
             .map( |v| v.0.to_owned() )
             .collect::<Vec<CharacterId>>();
         self.link.response(sub.to_owned(), Response::AnswerIdList(as_vec));
     }
-    fn update_char_list(&self, sub_list : &HashSet<HandlerId>, id_list : &HashMap<CharacterId,Character>){
+    fn update_char_list(&self, sub_list : &HashSet<HandlerId>, id_list : &IndexMap<CharacterId,Character>){
         for sub in sub_list.iter() {
             self.send_list(sub, id_list);
         }

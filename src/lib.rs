@@ -9,6 +9,7 @@ extern crate serde_derive;
 
 #[macro_use]
 extern crate yew;
+extern crate indexmap;
 
 use crate::components::arena::arena_container::Arena;
 use yew::prelude::*;

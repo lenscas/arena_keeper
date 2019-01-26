@@ -1,6 +1,7 @@
 use crate::agents::character_agent::CharacterId;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use indexmap::IndexMap;
 use yew::prelude::worker::*;
 
 use crate::classes::fight::Fight;
@@ -11,7 +12,7 @@ pub struct FightId(pub u64);
 pub struct Worker {
 	link: AgentLink<Worker>,
 	component_list: HashSet<HandlerId>,
-	fights: HashMap<FightId,Fight>,
+	fights: IndexMap<FightId,Fight>,
 	selected_fighters : (Option<CharacterId>,Option<CharacterId>),
 	subbed_to_selected_fighters : HashMap<u8,HashSet<HandlerId>>,
 	subbed_to_fight : HashMap<FightId,HashSet<HandlerId>>,
@@ -58,7 +59,7 @@ impl Agent for Worker {
 		Worker {
 			link,
 			component_list: HashSet::new(),
-			fights: HashMap::new(),
+			fights: IndexMap::new(),
 			current_id : 0,
 			selected_fighters: (None,None),
 			subbed_to_selected_fighters : HashMap::new(),
