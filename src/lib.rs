@@ -17,7 +17,7 @@ use yew::prelude::*;
 pub mod components;
 pub mod agents;
 pub mod classes;
-
+pub mod generated;
 use crate::components::character::character_list::CharacterList;
 
 pub struct Model {}

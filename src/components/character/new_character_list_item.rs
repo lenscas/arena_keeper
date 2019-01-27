@@ -88,6 +88,7 @@ impl Renderable<CharacterListItem> for CharacterListItem {
 		if let Some(character) = &self.character {
 			let image = character.get_image();
 			let name = character.name.clone();
+			let desc = character.description.clone();
 			let max_health = character.max_health;
 			let cur_health = character.cur_health;
 			return html! {
@@ -117,7 +118,7 @@ impl Renderable<CharacterListItem> for CharacterListItem {
 								</div>
 							</div>
 							<div class="row",>
-								<p>{"This is a nice description of this race"}</p>
+								<p>{desc}</p>
 							</div>
 						</div>
 					</div>

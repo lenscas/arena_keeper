@@ -123,7 +123,6 @@ impl Agent for Worker {
 				self.subbed_to_fight_list.insert(who);
 			},
 			Request::GetReadyFighter(i) => {
-				info!("{}", i);
 				let m_char_id = if i == 0 {
 					self.selected_fighters.0
 				} else {

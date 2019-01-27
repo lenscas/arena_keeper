@@ -1,5 +1,5 @@
 use crate::classes::character::Character;
-use crate::classes::character::CharacterTypes;
+
 use std::collections::HashMap;
 use indexmap::IndexMap;
 use yew::prelude::worker::*;
@@ -70,9 +70,9 @@ impl Agent for Worker {
             subbed_to_available_list : HashSet::new(),
             subbed_to_single_available_char : HashMap::new()
 		};
-		agent.to_be_chosen.insert(CharacterId { 0:1}, Character::create_character(CharacterTypes::Human));
-		agent.to_be_chosen.insert(CharacterId { 0:2}, Character::create_character(CharacterTypes::Merfolk));
-		agent.to_be_chosen.insert(CharacterId { 0:3}, Character::create_character(CharacterTypes::Merfolk));
+		agent.to_be_chosen.insert(CharacterId { 0:1}, Character::create_character());
+		agent.to_be_chosen.insert(CharacterId { 0:2}, Character::create_character());
+		agent.to_be_chosen.insert(CharacterId { 0:3}, Character::create_character());
         agent
     }
     fn connected(&mut self , id: HandlerId){

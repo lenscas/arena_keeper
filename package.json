@@ -1,0 +1,11 @@
+{
+  "name": "arena_keeper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/lenscas/arena_keeper.git",
+  "author": "lenscas <lenscas@gmail.com>",
+  "license": "MIT",
+  "scripts" : {
+    "gen_species" : "nodejs ./scripts/gen_species.js"
+  }
+}
