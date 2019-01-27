@@ -18,6 +18,7 @@ pub mod components;
 pub mod agents;
 pub mod classes;
 pub mod generated;
+pub mod funcs;
 use crate::components::character::character_list::CharacterList;
 
 pub struct Model {}

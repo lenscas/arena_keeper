@@ -8,13 +8,13 @@ use std::str::FromStr;
 pub struct Arena {
 	fights : Vec<fight_agent::FightId>,
 	worker: Box<Bridge<fight_agent::Worker>>,
-	lethal_chance: u64
+	lethal_chance: i32
 }
 
 
 pub enum Msg {
 	UpdateFights(fight_agent::Response),
-	UpdateLethalChance(u64),
+	UpdateLethalChance(i32),
 	CreateFight(SubmitEvent)
 }
 #[derive(PartialEq, Clone)]
@@ -81,7 +81,7 @@ impl Renderable<Arena> for Arena
 				<ul class=("list-group","list-item-flush","h-90", "scrollBar"),>
 					{self.render_fight_planner()}
 					{for(self.fights).iter().map(
-						|v| return html! {
+						|v| html! {
 							<FightItem: fight_id=v ,/>
 						}
 					)}
@@ -115,7 +115,7 @@ impl Arena {
 										max="20",
 										data-slider-step="1",
 										data-slider-value="14",
-										oninput=|v|Msg::UpdateLethalChance(u64::from_str(v.value.as_str()).unwrap()),
+										oninput=|v|Msg::UpdateLethalChance(i32::from_str(v.value.as_str()).unwrap()),
 										value=self.lethal_chance,
 									/>
 								</div>

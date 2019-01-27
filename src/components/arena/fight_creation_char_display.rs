@@ -69,6 +69,7 @@ impl Component for SideCharDisplay
 							}
 							 //.send();
 						} else {
+							info!("in none");
 							self.character = None;
 						}
 						self.char_id = new_char;

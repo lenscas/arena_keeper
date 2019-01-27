@@ -56,7 +56,7 @@ impl Component for FightItem
 			Msg::UpdateFights(res) => {
 				match res {
 					fight_agent::Response::UpdateFight(fight) => {
-						self.char_worker.send(character_agent::Request::GetDoubleCharacter(fight.fighters.clone()));
+						self.char_worker.send(character_agent::Request::GetDoubleCharacter(fight.get_fighters_ids()));
 						self.fight = Some(fight);
 						true
 					},

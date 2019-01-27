@@ -97,19 +97,14 @@ impl Agent for Worker {
             },
             Request::SwitchSubscribedAvailableCharacter(old_char_id,new_char_id) => {
                 self.switch_subscibed_char(&who, &old_char_id, &new_char_id,true);
-                /*
-                let m_sub_list = self.subbed_to_single_available_char.get_mut(&old_char_id);
-                if let Some(sub_list) = m_sub_list {
-                    sub_list.remove(&who);
-                }
-                self.subbed_to_single_available_char.entry(new_char_id).or_insert(HashSet::new()).insert(who);
-                self.respondWithSingleChar(&who, &new_char_id, &self.to_be_chosen);
-                */
             },
             Request::UpdateCharacter(char_id,new_character) => {
-                let m_chara = self.chosen_characters.get_mut(&char_id);
-                if let Some(chara) = m_chara {
-                    *chara = new_character;
+                let new_health = new_character.cur_health;
+                self.chosen_characters.insert(char_id, new_character);
+                self.update_char(&char_id);
+                if new_health <= 0 {
+                    self.chosen_characters.remove(&char_id);
+                    self.update_char_list(&self.subbed_to_char_list, &self.chosen_characters);
                 }
             },
             Request::BuyCharacter(id) => {
@@ -204,6 +199,13 @@ impl Worker {
     fn update_char_list(&self, sub_list : &HashSet<HandlerId>, id_list : &IndexMap<CharacterId,Character>){
         for sub in sub_list.iter() {
             self.send_list(sub, id_list);
+        }
+    }
+    fn update_char (&self, char_id : &CharacterId){
+        if let Some(subs) = self.subbed_to_single_char.get(char_id) {
+            for sub in subs.iter() {
+                self.respond_with_single_char(sub, char_id, &self.chosen_characters);
+            }
         }
     }
 }

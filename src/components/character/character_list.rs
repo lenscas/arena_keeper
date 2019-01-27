@@ -56,7 +56,7 @@ impl Renderable<CharacterList> for CharacterList
 				<ul class=("list-group","list-item-flush","h-90", "scrollBar"),>
 					{
 						for(self.characters).iter().map(
-							|char_id| return html! {
+							|char_id| html! {
 								<CharacterDisplay: character_id=char_id,/>
 							}
 						)

@@ -126,6 +126,6 @@ impl Renderable<CharacterListItem> for CharacterListItem {
 				</li>
 			}
 		}
-		return html!{<div></div>}
+		html!{<div></div>}
 	}
 }
