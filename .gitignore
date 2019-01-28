@@ -2,5 +2,5 @@
 /static/assets/images/species/*/*.png
 /src/generated/*.rs
 /species/*/images/*.png
-
+/static/js/generated/*.js
 /target/*

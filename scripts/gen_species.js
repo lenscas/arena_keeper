@@ -137,6 +137,9 @@ genPossibleImages = {
 			fs.copyFileSync(v.full,newPathAndName)
 			fileList.push("/assets/images/species/"+type+"/"+v.name)
 		})
+		if(fileList.length == 0) {
+			throw(new Error("No images found."))
+		}
 		this.list.push({type,list:fileList})
 	},
 	doGen(){
