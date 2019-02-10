@@ -1,11 +1,13 @@
+use crate::components::shared::link::Link;
 use crate::agents::character_agent::CharacterId;
 use yew::prelude::*;
 
-use crate::components::character::new_character::NewCharacter;
 use crate::components::character::character_display::CharacterDisplay;
 use crate::agents::character_agent::Worker;
 use crate::agents::character_agent::Request;
 use crate::agents::character_agent::Response;
+use crate::agents::router;
+use crate::generated::routes::Windows;
 
 pub struct CharacterList {
 	characters : Vec<CharacterId>,
@@ -44,6 +46,9 @@ impl Component for CharacterList
 		}
 		true
 	}
+	fn change(&mut self,_: Self::Properties) -> ShouldRender {
+		true
+	}
 }
 impl Renderable<CharacterList> for CharacterList
 {
@@ -51,7 +56,7 @@ impl Renderable<CharacterList> for CharacterList
 		html! {
 			<div class=("card","h-100"),>
 				<div class=("card-header","h-10"),>
-					<NewCharacter: />
+					<Link: action=router::Request::ActivateWindow(Windows::Shop), class="btn btn-success", text="Shop",/>
 				</div>
 				<ul class=("list-group","list-item-flush","h-90", "scrollBar"),>
 					{
@@ -66,5 +71,3 @@ impl Renderable<CharacterList> for CharacterList
 		}
 	}
 }
-
-impl CharacterList {}
