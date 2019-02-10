@@ -1,5 +1,5 @@
 
-use crate::funcs::random::getMax;
+use crate::funcs::random::get_max;
 use crate::classes::character::Character;
 use crate::classes::fight_outcome::FightOutcome;
 use crate::agents::character_agent::CharacterId;
@@ -83,10 +83,10 @@ impl Fight{
 		}
 	}
 	fn calculate_lost_life(&self, character : &Character) -> Character {
-		let hits_char1 = getMax(self.lethal_chance + 2 ) + 1;
+		let hits_char1 = get_max(self.lethal_chance + 2 ) + 1;
 		let mut total_life_lost = 0;
 		for _ in 0..hits_char1 {
-			total_life_lost = total_life_lost + getMax(self.lethal_chance + 5);
+			total_life_lost = total_life_lost + get_max(self.lethal_chance + 5);
 		};
 		let mut new_char = character.clone();
 		new_char.cur_health = new_char.cur_health - i64::from(total_life_lost);
@@ -96,7 +96,7 @@ impl Fight{
 		new_char
 	}
 	fn calculate_money(&self) -> i64 {
-		i64::from(getMax( (self.lethal_chance + 1) * 20))
+		i64::from(get_max( (self.lethal_chance + 1) * 20))
 	}
 	fn calc_outcome(&self, char1 : (CharacterId,&Character), char2: (CharacterId,&Character)) ->FightOutcome {
 		let new_char_1 = self.calculate_lost_life(char1.1);
