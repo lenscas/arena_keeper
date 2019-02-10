@@ -11,7 +11,9 @@ extern crate serde_derive;
 extern crate yew;
 extern crate indexmap;
 
-use crate::components::arena::arena_container::Arena;
+use crate::generated::active_windows::ActiveWindows;
+use crate::pages::index::index;
+
 use yew::prelude::*;
 
 pub mod components;
@@ -19,20 +21,33 @@ pub mod agents;
 pub mod classes;
 pub mod generated;
 pub mod funcs;
-use crate::components::character::character_list::CharacterList;
+pub mod pages;
 
-pub struct Model {}
+use crate::agents::router;
 
-pub enum Msg {}
+pub struct Model {
+	_router: Box<Bridge<router::Worker>>,
+}
+
+pub enum Msg {
+	HandleWindowState( router::Request)
+}
 
 impl Component for Model{
 	type Message = Msg;
 	type Properties = ();
 
-	fn create(_: Self::Properties, _: ComponentLink<Self> ) -> Self {
-		Model {}
+	fn create(_: Self::Properties, mut link: ComponentLink<Self> ) -> Self {
+		let callback = link.send_back(|route| Msg::HandleWindowState(route));
+        let router = router::Worker::bridge(callback);
+		Model {
+			_router :router,
+		}
 	}
-	fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+	fn update(&mut self, _: Self::Message) -> ShouldRender {
+		false
+	}
+	fn change(&mut self, _: Self::Properties) -> ShouldRender {
 		true
 	}
 }
@@ -43,16 +58,8 @@ impl Renderable<Model> for Model{
 				<nav class=("navbar","navbar-expand-lg", "navbar-dark", "bg-dark"), id="mainNav",>
 					<span class="navbar-brand",>{"Arena keeper"}</span>
 				</nav>
-				<div class="container-fluid", id="mainPage",>
-					<div class=("row","h-100"),>
-						<div class=("col-md-3","h-100"),>
-							<CharacterList: />
-						</div>
-						<div class=("col-md-9","h-100"),>
-							<Arena: />
-						</div>
-					</div>
-				</div>
+				{index()}
+				<ActiveWindows:/>
 			</>
 		}
 	}

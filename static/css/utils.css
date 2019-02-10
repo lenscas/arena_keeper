@@ -9,3 +9,26 @@
 .h-90 {
     height: 90%;
 }
+.pointer {
+    cursor: pointer;
+}
+.window {
+    position: absolute;
+    top:0px;
+    z-index: 9;
+    background-color: #f1f1f1;
+    border: 1px solid #d3d3d3;
+    text-align: center;
+}
+.window-header {
+    cursor: move;
+    z-index: 10;
+
+}
+.shop {
+    width: 25vw;
+}
+#active .window-header {
+    background-color: #2196F3;
+    color: #fff;
+}
