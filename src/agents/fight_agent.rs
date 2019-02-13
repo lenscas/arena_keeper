@@ -103,26 +103,14 @@ impl Agent for Worker {
 							self.char_worker.send(character_agent::Request::UpdateCharacter( (res.chars.0).0,(res.chars.0).1));
 							self.char_worker.send(character_agent::Request::UpdateCharacter( (res.chars.1).0,(res.chars.1).1));
 							self.fights.remove(fight_id);
-							info!("len: {}",self.fights.len());
-							let m_next = self.fights.iter_mut().nth(0);
-							if let Some(next) = m_next {
-								info!("in if");
-								self.busy_fight = Some(*next.0);
-								info!("id: {}", (next.0).0);
-								next.1.start();
-
-							};
+							self.start_next(0);
 							info!("len2: {}",self.fights.len());
 							self.money_worker.send(money_agent::Request::AddAmount(res.earned_money));
 							self.send_update_list();
 						}
 					}
 				} else {
-					let m_next = self.fights.iter_mut().nth(1);
-					if let Some(next) = m_next {
-						self.busy_fight = Some(*next.0);
-						next.1.start();
-					};
+					self.start_next(1);
 				}
 			},
 			Msg::UpdateCharacter(res) => {
@@ -184,16 +172,13 @@ impl Agent for Worker {
 			Request::CreateFight(lethal_chance) => {
 				if let Some(fighter1) = self.selected_fighters.0 {
 					if let Some(fighter2) = self.selected_fighters.1 {
-						let mut fight = Fight::new(lethal_chance, (fighter1,fighter2));
+						let fight = Fight::new(lethal_chance, (fighter1,fighter2));
 						self.current_id = self.current_id + 1;
 						let fight_id= FightId {0:self.current_id};
-						if self.fights.len() == 0 {
-							fight.start();
-							self.busy_fight = Some(fight_id);
-						}
-
 						self.fights.insert(fight_id, fight);
-
+						if self.fights.len() == 1 {
+							self.start_next(0);
+						}
 						for v in self.subbed_to_fight_list.iter() {
 							self.link.response(*v, Response::UpdateFightList(self.create_fight_id_vec()))
 						}
@@ -250,5 +235,15 @@ impl Worker {
 		for v in &self.subbed_to_fight_list {
 			self.link.response(*v, Response::UpdateFightList(self.create_fight_id_vec()));
 		}
+	}
+	fn start_next(&mut self, at: usize) {
+		let m_next = self.fights.iter_mut().nth(at);
+		if let Some(next) = m_next {
+			self.busy_fight = Some(*next.0);
+			next.1.start();
+			let fighters = next.1.get_fighters_ids();
+			self.char_worker.send(character_agent::Request::SetCharacterAsFighting(fighters.0));
+			self.char_worker.send(character_agent::Request::SetCharacterAsFighting(fighters.1));
+		};
 	}
 }

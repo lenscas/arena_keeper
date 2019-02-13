@@ -27,8 +27,9 @@ impl Fight{
 			lethal_chance
 		}
 	}
-	pub fn start(&mut self) {
+	pub fn start(&mut self) -> bool{
 		self.has_started = true;
+		self.has_started
 	}
 	pub fn update_character(&mut self, char_id : &CharacterId, character: &Character){
 		if (self.fighters.0).0 == *char_id {
@@ -99,8 +100,10 @@ impl Fight{
 		i64::from(get_max( (self.lethal_chance + 1) * 20))
 	}
 	fn calc_outcome(&self, char1 : (CharacterId,&Character), char2: (CharacterId,&Character)) ->FightOutcome {
-		let new_char_1 = self.calculate_lost_life(char1.1);
-		let new_char_2 = self.calculate_lost_life(char2.1);
+		let mut new_char_1 = self.calculate_lost_life(char1.1);
+		let mut new_char_2 = self.calculate_lost_life(char2.1);
+		new_char_1.is_fighting = false;
+		new_char_2.is_fighting = false;
 		FightOutcome {
 			is_done : true,
 			chars : (

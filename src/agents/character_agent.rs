@@ -5,6 +5,8 @@ use indexmap::IndexMap;
 use yew::prelude::worker::*;
 use std::collections::HashSet;
 
+use crate::agents::clock_agent;
+
 #[derive(Copy,Clone, PartialEq, Eq, Hash,Serialize, Deserialize, Debug)]
 pub struct CharacterId(pub u64);
 
@@ -16,11 +18,14 @@ pub struct Worker {
     subbed_to_single_available_char : HashMap<CharacterId,HashSet<HandlerId>>,
     subbed_to_available_list : HashSet<HandlerId>,
 	chosen_characters : IndexMap<CharacterId,Character>,
-	to_be_chosen : IndexMap<CharacterId,Character>
+	to_be_chosen : IndexMap<CharacterId,Character>,
+    _clock_worker: Box<Bridge<clock_agent::Worker>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Request {
+    SetCharacterAsFighting(CharacterId),
+    SetCharacterAsNotFighting(CharacterId),
     SwitchSubscribedAvailableCharacter(CharacterId,CharacterId),
     SwitchSubscribedCharacter(CharacterId,CharacterId),
     UpdateCharacter(CharacterId,Character),
@@ -46,6 +51,7 @@ impl Transferable for Response { }
 
 pub enum Msg {
     Updating,
+    Tick
 }
 
 impl Agent for Worker {
@@ -60,6 +66,9 @@ impl Agent for Worker {
 
     // Create an instance with a link to agent's environment.
     fn create(link: AgentLink<Self>) -> Self {
+        let clock_agent_callback = link.send_back(|_| Msg::Tick);
+		let clock_worker = clock_agent::Worker::bridge(clock_agent_callback);
+
         let mut agent = Worker {
             link,
             component_list : HashSet::new(),
@@ -68,7 +77,8 @@ impl Agent for Worker {
 			chosen_characters : IndexMap::new(),
 			to_be_chosen : IndexMap::new(),
             subbed_to_available_list : HashSet::new(),
-            subbed_to_single_available_char : HashMap::new()
+            subbed_to_single_available_char : HashMap::new(),
+            _clock_worker : clock_worker,
 		};
 		agent.to_be_chosen.insert(CharacterId { 0:1}, Character::create_character());
 		agent.to_be_chosen.insert(CharacterId { 0:2}, Character::create_character());
@@ -84,6 +94,17 @@ impl Agent for Worker {
             Msg::Updating => {
                 for sub in self.component_list.iter(){
                     self.link.response(*sub, Response::Answer);
+                }
+            },
+            Msg::Tick=> {
+                let mut to_update : Vec<CharacterId> = vec!();
+                for v in self.chosen_characters.iter_mut() {
+                    if v.1.update() {
+                        to_update.push(*v.0);
+                    }
+                }
+                for v in to_update.iter() {
+                    self.update_char(v);
                 }
             }
         }
@@ -158,6 +179,16 @@ impl Agent for Worker {
                         self.subbed_to_single_char.entry(char1_id).or_default().insert(who);
                         self.subbed_to_single_char.entry(char2_id).or_default().insert(who);
                     }
+                }
+            },
+            Request::SetCharacterAsFighting(char_id) => {
+                if let Some(char1) = self.chosen_characters.get_mut(&char_id) {
+                    char1.is_fighting = true;
+                }
+            },
+            Request::SetCharacterAsNotFighting(char_id) => {
+                if let Some(char1) = self.chosen_characters.get_mut(&char_id) {
+                    char1.is_fighting = false;
                 }
             }
 
