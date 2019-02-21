@@ -10,6 +10,43 @@ use crate::agents::clock_agent;
 #[derive(Copy,Clone, PartialEq, Eq, Hash,Serialize, Deserialize, Debug)]
 pub struct CharacterId(pub u64);
 
+#[derive(Clone, PartialEq, Eq, Hash,Serialize, Deserialize, Debug)]
+pub struct CharWithId {
+    pub id : CharacterId,
+    pub character : Character
+}
+impl CharWithId {
+    pub fn create(id : CharacterId, character : Character) -> CharWithId {
+        CharWithId {
+            id,
+            character
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Hash,Serialize, Deserialize, Debug)]
+pub struct MaybeCharWithId {
+    pub id : CharacterId,
+    pub character : Option<Character>
+}
+impl MaybeCharWithId {
+    pub fn create(id: CharacterId, character : Character) -> MaybeCharWithId {
+        MaybeCharWithId {
+            id,
+            character : Some(character)
+        }
+    }
+    pub fn create_from_ref(id: CharacterId, character : &Character) -> MaybeCharWithId {
+        Self::create(id, character.clone())
+    }
+    pub fn create_from_maybe(id:CharacterId, character: Option<Character>) -> MaybeCharWithId {
+        MaybeCharWithId {
+            id,
+            character
+        }
+    }
+}
+
 pub struct Worker {
     link: AgentLink<Worker>,
     component_list : HashSet<HandlerId>,
@@ -28,10 +65,11 @@ pub enum Request {
     SetCharacterAsNotFighting(CharacterId),
     SwitchSubscribedAvailableCharacter(CharacterId,CharacterId),
     SwitchSubscribedCharacter(CharacterId,CharacterId),
-    UpdateCharacter(CharacterId,Character),
+    UpdateCharacter(MaybeCharWithId),
+    UpdateMultipleCharacters(Vec<MaybeCharWithId>),
     BuyCharacter(CharacterId),
     GetCharacter(CharacterId),
-    GetDoubleCharacter( (CharacterId,CharacterId)),
+    GetMultipleCharacters(Vec<CharacterId>),
     GetAvailableChar(CharacterId),
     GetIdList,
     GetAvailableList,
@@ -43,8 +81,8 @@ impl Transferable for Request { }
 pub enum Response {
     Answer,
     AnswerIdList(Vec<CharacterId>),
-    AnswerSingleChar(Character,CharacterId),
-    AnswerDoubleChar((CharacterId,Character),((CharacterId,Character)))
+    AnswerSingleChar(MaybeCharWithId),
+    AnswerMultipleChars(Vec<MaybeCharWithId>)
 }
 
 impl Transferable for Response { }
@@ -55,10 +93,6 @@ pub enum Msg {
 }
 
 impl Agent for Worker {
-    // Available:
-    // - `Job` (one per bridge)
-    // - `Context` (shared in the same thread)
-    // - `Public` (separate thread).
     type Reach = Context; // Spawn only one instance per thread (all components could reach this)
     type Message = Msg;
     type Input = Request;
@@ -119,14 +153,24 @@ impl Agent for Worker {
             Request::SwitchSubscribedAvailableCharacter(old_char_id,new_char_id) => {
                 self.switch_subscibed_char(&who, &old_char_id, &new_char_id,true);
             },
-            Request::UpdateCharacter(char_id,new_character) => {
-                let new_health = new_character.cur_health;
-                self.chosen_characters.insert(char_id, new_character);
-                self.update_char(&char_id);
-                if new_health <= 0 {
-                    self.chosen_characters.remove(&char_id);
+            Request::UpdateMultipleCharacters(multiple_characters) => {
+                for character in multiple_characters {
+                    self.handle(Request::UpdateCharacter(character), who);
+                }
+            },
+            Request::UpdateCharacter(character) => {
+                if let Some(new_char) = character.character {
+                    if new_char.cur_health <= 0 {
+                        self.chosen_characters.remove(&character.id);
+                        self.update_char_list(&self.subbed_to_char_list, &self.chosen_characters);
+                    } else {
+                        self.chosen_characters.insert(character.id, new_char);
+                    }
+                } else {
+                    self.chosen_characters.remove(&character.id);
                     self.update_char_list(&self.subbed_to_char_list, &self.chosen_characters);
                 }
+                self.update_char(&character.id);
             },
             Request::BuyCharacter(id) => {
                 let m_chara = self.to_be_chosen.remove(&id);
@@ -147,7 +191,7 @@ impl Agent for Worker {
             Request::GetCharacter(char_id) => {
                 let m_chara = self.chosen_characters.get(&char_id);
                 if let Some(chara) = m_chara {
-                    self.link.response(who, Response::AnswerSingleChar(chara.clone(),char_id));
+                    self.link.response(who, Response::AnswerSingleChar(MaybeCharWithId::create_from_ref(char_id, chara)));
                     let map = self.subbed_to_single_char.entry(char_id).or_insert(HashSet::new());
                     map.insert(who);
                 }
@@ -163,23 +207,19 @@ impl Agent for Worker {
             Request::GetAvailableChar(char_id) => {
                 let m_chara = self.to_be_chosen.get(&char_id);
                 if let Some(chara) = m_chara {
-                    self.link.response(who, Response::AnswerSingleChar(chara.clone(),char_id));
+                    self.link.response(who, Response::AnswerSingleChar(MaybeCharWithId::create_from_ref(char_id, chara)));
                     let map = self.subbed_to_single_available_char.entry(char_id).or_insert(HashSet::new());
                     map.insert(who);
                 }
             },
-            Request::GetDoubleCharacter(char_ids) => {
-                let char1_id = char_ids.0;
-                let char2_id = char_ids.1;
-                if let Some(char1) = self.chosen_characters.get(&char1_id) {
-                    if let Some(char2) =  self.chosen_characters.get(&char2_id) {
-                        let res_char1 = (char1_id,char1.clone());
-                        let res_char2 = (char2_id,char2.clone());
-                        self.link.response(who, Response::AnswerDoubleChar(res_char1,res_char2));
-                        self.subbed_to_single_char.entry(char1_id).or_default().insert(who);
-                        self.subbed_to_single_char.entry(char2_id).or_default().insert(who);
-                    }
-                }
+            Request::GetMultipleCharacters(char_ids) => {
+                let chars : Vec<MaybeCharWithId> = char_ids
+                    .iter()
+                    .map(
+                        |v|
+                        self.get_char_and_sub(v, who)
+                    ).collect();
+                self.link.response(who, Response::AnswerMultipleChars(chars));
             },
             Request::SetCharacterAsFighting(char_id) => {
                 if let Some(char1) = self.chosen_characters.get_mut(&char_id) {
@@ -216,9 +256,7 @@ impl Worker {
     }
     fn respond_with_single_char(&self, sub :&HandlerId, char_id : &CharacterId, id_list : &IndexMap<CharacterId,Character>) {
         let m_chara = id_list.get(char_id);
-        if let Some(chara) = m_chara {
-            self.link.response(sub.to_owned(), Response::AnswerSingleChar(chara.clone(),*char_id));
-        }
+        self.link.response(sub.to_owned(), Response::AnswerSingleChar( MaybeCharWithId::create_from_maybe(*char_id, m_chara.cloned())));
     }
     fn send_list(&self,sub : &HandlerId, id_list : &IndexMap<CharacterId,Character>){
         let as_vec = id_list
@@ -238,5 +276,12 @@ impl Worker {
                 self.respond_with_single_char(sub, char_id, &self.chosen_characters);
             }
         }
+    }
+    fn get_char_and_sub(&mut self, char_id : &CharacterId , who: HandlerId) -> MaybeCharWithId {
+        self.subbed_to_single_char.entry(*char_id).or_default().insert(who);
+        MaybeCharWithId::create_from_maybe(
+            *char_id,
+            self.chosen_characters.get(char_id).cloned()
+        )
     }
 }

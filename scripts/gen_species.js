@@ -42,7 +42,7 @@ genSpeciesEnum = {
 	doGen(){
 		let typeStr = `
 use core::fmt;
-#[derive(PartialEq,Copy,Clone,Debug,Serialize,Deserialize)]
+#[derive(Eq,Hash,PartialEq,Copy,Clone,Debug,Serialize,Deserialize)]
 pub enum SpeciesTypes {`
 
 		typeStr += this.list.join(",")

@@ -4,7 +4,7 @@ use crate::generated::species_types::SpeciesTypes;
 use crate::generated::create_type::generate_type;
 use crate::generated::genereate_image::generate_image;
 
-#[derive(PartialEq,Clone,Serialize, Deserialize,Debug)]
+#[derive(Eq,Hash,PartialEq,Clone,Serialize, Deserialize,Debug)]
 pub struct Character {
 	pub char_type : SpeciesTypes,
 	pub name : String,

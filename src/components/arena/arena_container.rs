@@ -80,7 +80,7 @@ impl Renderable<Arena> for Arena
 				</div>
 				<ul class=("list-group","list-item-flush","h-90", "scrollBar"),>
 					{self.render_fight_planner()}
-					{for(self.fights).iter().map(
+					{for self.fights.iter().map(
 						|v| html! {
 							<FightItem: fight_id=v ,/>
 						}

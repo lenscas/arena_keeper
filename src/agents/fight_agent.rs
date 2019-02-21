@@ -16,8 +16,8 @@ pub struct Worker {
 	link: AgentLink<Worker>,
 	component_list: HashSet<HandlerId>,
 	fights: IndexMap<FightId,Fight>,
-	selected_fighters : (Option<CharacterId>,Option<CharacterId>),
-	subbed_to_selected_fighters : HashMap<u8,HashSet<HandlerId>>,
+	selected_fighters : Vec<CharacterId>,
+	subbed_to_selected_fighters : HashMap<usize,HashSet<HandlerId>>,
 	subbed_to_fight : HashMap<FightId,HashSet<HandlerId>>,
 	subbed_to_fight_list : HashSet<HandlerId>,
 	current_id : u64,
@@ -33,7 +33,7 @@ pub enum Request {
 	CreateFight(i32),
 	GetAllFights,
 	GetFight(FightId),
-	GetReadyFighter(u8)
+	GetReadyFighter(usize)
 }
 
 impl Transferable for Request {}
@@ -54,10 +54,6 @@ pub enum Msg {
 }
 
 impl Agent for Worker {
-	// Available:
-	// - `Job` (one per bridge)
-	// - `Context` (shared in the same thread)
-	// - `Public` (separate thread).
 	type Reach = Context; // Spawn only one instance per thread (all components could reach this)
 	type Message = Msg;
 	type Input = Request;
@@ -73,13 +69,12 @@ impl Agent for Worker {
 
 		let clock_agent_callback = link.send_back(|_| Msg::Tick);
 		let clock_worker = clock_agent::Worker::bridge(clock_agent_callback);
-		info!{"We should have a clock?"}
 		Worker {
 			link,
 			component_list: HashSet::new(),
 			fights: IndexMap::new(),
 			current_id : 0,
-			selected_fighters: (None,None),
+			selected_fighters: Vec::new(),
 			subbed_to_selected_fighters : HashMap::new(),
 			subbed_to_fight : HashMap::new(),
 			subbed_to_fight_list : HashSet::new(),
@@ -100,11 +95,9 @@ impl Agent for Worker {
 					if let Some(fight) = self.fights.get_mut(fight_id) {
 						let res = fight.update();
 						if res.is_done {
-							self.char_worker.send(character_agent::Request::UpdateCharacter( (res.chars.0).0,(res.chars.0).1));
-							self.char_worker.send(character_agent::Request::UpdateCharacter( (res.chars.1).0,(res.chars.1).1));
+							self.char_worker.send(character_agent::Request::UpdateMultipleCharacters(res.chars));
 							self.fights.remove(fight_id);
 							self.start_next(0);
-							info!("len2: {}",self.fights.len());
 							self.money_worker.send(money_agent::Request::AddAmount(res.earned_money));
 							self.send_update_list();
 						}
@@ -115,31 +108,27 @@ impl Agent for Worker {
 			},
 			Msg::UpdateCharacter(res) => {
 				match res {
-					character_agent::Response::AnswerDoubleChar(char1,char2) => {
-						for v in self.fights.iter_mut() {
-							v.1.update_character(&char1.0,&char1.1);
-							v.1.update_character(&char2.0,&char2.1);
+					character_agent::Response::AnswerMultipleChars(new_characters) => {
+						for fighter in self.fights.iter_mut() {
+							for new_character in new_characters.iter() {
+								fighter.1.update_character(&new_character);
+							}
 						};
 					},
-					character_agent::Response::AnswerSingleChar(character,id) => {
+					character_agent::Response::AnswerSingleChar(updated_character) => {
 						for v in self.fights.iter_mut() {
-							v.1.update_character(&id,&character);
+							v.1.update_character(&updated_character);
 						};
-						if let Some(selected1) = self.selected_fighters.0 {
-							info!("{}", (selected1).0);
-							if selected1 == id && character.cur_health == 0 {
-								self.selected_fighters.0 = None;
-								info!("in this");
-								self.send_update_fighter(0);
-							}
-						};
-						if let Some(selected2) = self.selected_fighters.1 {
-							info!("{}", (selected2).0);
-							if selected2 == id && character.cur_health == 0 {
-								self.selected_fighters.1 = None;
-								info!("in this");
-								self.send_update_fighter(1);
-							}
+						if updated_character.character.is_none() {
+							self.selected_fighters = self
+								.selected_fighters
+								.iter()
+								.cloned()
+								.filter(
+									|v|
+									*v == updated_character.id
+								)
+								.collect();
 						};
 					}
 					_=> {
@@ -155,35 +144,34 @@ impl Agent for Worker {
 	fn handle(&mut self, msg: Self::Input, who: HandlerId) {
 		match msg {
 			Request::AddAsFighter(char_id) => {
-				if self.selected_fighters.0.is_none() {
-					self.selected_fighters.0 = Some(char_id);
-					self.send_update_fighter(0);
-				} else if self.selected_fighters.1.is_none() {
-					self.selected_fighters.1 = Some(char_id);
-					self.send_update_fighter(1);
+				info!("Add fighter");
+				let len = self.selected_fighters.len();
+				if len < 2 {
+					&self.selected_fighters.push(char_id);
 				} else {
-					let old_char = self.selected_fighters.1.clone();
-					self.selected_fighters.0 = old_char;
-					self.selected_fighters.1 = Some(char_id);
-					self.send_update_fighter(0);
-					self.send_update_fighter(1);
+					self.selected_fighters.remove(0);
+					self.selected_fighters.push(char_id);
 				}
+				self.send_update_fighters(self.selected_fighters.iter().map(|v| Some(*v)).collect()) ;
 			},
 			Request::CreateFight(lethal_chance) => {
-				if let Some(fighter1) = self.selected_fighters.0 {
-					if let Some(fighter2) = self.selected_fighters.1 {
-						let fight = Fight::new(lethal_chance, (fighter1,fighter2));
-						self.current_id = self.current_id + 1;
-						let fight_id= FightId {0:self.current_id};
-						self.fights.insert(fight_id, fight);
-						if self.fights.len() == 1 {
-							self.start_next(0);
-						}
-						for v in self.subbed_to_fight_list.iter() {
-							self.link.response(*v, Response::UpdateFightList(self.create_fight_id_vec()))
-						}
-						self.char_worker.send(character_agent::Request::GetDoubleCharacter((fighter1,fighter2)));
+				if self.selected_fighters.len() >= 2 {
+					let fight = Fight::new(lethal_chance, &self.selected_fighters);
+					self.current_id = self.current_id + 1;
+					let fight_id= FightId {0:self.current_id};
+					self.fights.insert(fight_id, fight);
+					if self.fights.len() == 1 {
+						self.start_next(0);
 					}
+					for v in self.subbed_to_fight_list.iter() {
+						self.link.response(*v, Response::UpdateFightList(self.create_fight_id_vec()))
+					}
+					self.char_worker.send(
+						character_agent::Request::GetMultipleCharacters(
+							self.selected_fighters.clone()
+						)
+					);
+
 				}
 			},
 			Request::GetFight(fight_id) => {
@@ -201,29 +189,27 @@ impl Agent for Worker {
 				self.subbed_to_fight_list.insert(who);
 			},
 			Request::GetReadyFighter(i) => {
-				let m_char_id = if i == 0 {
-					self.selected_fighters.0
-				} else {
-					self.selected_fighters.1
-				};
 				self.subbed_to_selected_fighters.entry(i).or_default().insert(who.to_owned());
-				self.link.response(who,Response::UpdateFighter(m_char_id.clone()));
+				let char_id = self.selected_fighters.get(i);
+				self.link.response(who,Response::UpdateFighter(char_id.cloned()));
 			}
 
 		};
 	}
 }
 impl Worker {
-	fn send_update_fighter(&mut self, side : u8){
-		let fighter = if side == 0 {
-			self.selected_fighters.0
-		} else {
-			self.selected_fighters.1
+	fn send_update_fighters(&mut self, mut fighters : Vec<Option<CharacterId>> ) {
+		if fighters.len() < 2 {
+			fighters.push(None);
 		};
-		for v in self.subbed_to_selected_fighters.entry(side).or_default().iter() {
-			self.link.response(*v, Response::UpdateFighter(fighter));
-		};
+		for fighter_id in fighters.iter().enumerate() {
+			for sub in self.subbed_to_selected_fighters.entry(fighter_id.0).or_default().iter() {
+				info!("Send update");
+				self.link.response(*sub, Response::UpdateFighter(*fighter_id.1));
+			}
+		}
 	}
+
 	fn create_fight_id_vec(&self) -> Vec<FightId> {
 		self.fights.iter()
 			.map(
@@ -242,8 +228,9 @@ impl Worker {
 			self.busy_fight = Some(*next.0);
 			next.1.start();
 			let fighters = next.1.get_fighters_ids();
-			self.char_worker.send(character_agent::Request::SetCharacterAsFighting(fighters.0));
-			self.char_worker.send(character_agent::Request::SetCharacterAsFighting(fighters.1));
+			for fighter in fighters.iter() {
+				self.char_worker.send(character_agent::Request::SetCharacterAsFighting(*fighter));
+			}
 		};
 	}
 }

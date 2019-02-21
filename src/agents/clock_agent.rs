@@ -31,10 +31,6 @@ pub enum Msg {
 }
 
 impl Agent for Worker {
-    // Available:
-    // - `Job` (one per bridge)
-    // - `Context` (shared in the same thread)
-    // - `Public` (separate thread).
     type Reach = Context; // Spawn only one instance per thread (all components could reach this)
     type Message = Msg;
     type Input = Request;
@@ -46,7 +42,6 @@ impl Agent for Worker {
         let duration = Duration::from_secs(3);
         let callback = link.send_back(|_| Msg::Updating);
         let task = interval.spawn(duration, callback);
-        info!("we have a clock");
         Worker {
             link,
             _interval : interval,
@@ -60,7 +55,6 @@ impl Agent for Worker {
     }
     // Handle inner messages (of services of `send_back` callbacks)
     fn update(&mut self, msg: Self::Message) {
-        info!("it does a tick");
         match msg {
             Msg::Updating => {
                 self.update_count = self.update_count + 1;

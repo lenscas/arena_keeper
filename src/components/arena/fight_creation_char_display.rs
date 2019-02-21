@@ -61,6 +61,7 @@ impl Component for SideCharDisplay
 			Msg::UpdateFights(res) => {
 				match res {
 					fight_agent::Response::UpdateFighter(new_char) => {
+						info!("Got fighter update");
 						if let Some(chara) = new_char {
 							if let Some(old_char) = self.char_id {
 								self.character_worker.send(character_agent::Request::SwitchSubscribedCharacter(old_char,chara));
@@ -69,7 +70,6 @@ impl Component for SideCharDisplay
 							}
 							 //.send();
 						} else {
-							info!("in none");
 							self.character = None;
 						}
 						self.char_id = new_char;
@@ -82,8 +82,8 @@ impl Component for SideCharDisplay
 			},
 			Msg::UpdateCharacter(res) => {
 				match res {
-					character_agent::Response::AnswerSingleChar(new_char,_) => {
-						self.character = Some(new_char);
+					character_agent::Response::AnswerSingleChar(new_char) => {
+						self.character = new_char.character;
 						true
 					},
 					_ => {

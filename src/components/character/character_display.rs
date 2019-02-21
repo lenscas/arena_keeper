@@ -60,9 +60,9 @@ impl Component for CharacterDisplay {
 		match msg {
 			Msg::Update(res) => {
 				match res {
-					Response::AnswerSingleChar(chara,_) => {
+					Response::AnswerSingleChar(chara) => {
 
-						self.character = Some(chara);
+						self.character = chara.character;
 					},
 					_default => {
 						unreachable!();
@@ -80,9 +80,6 @@ impl Component for CharacterDisplay {
 	}
 	fn change(&mut self, props: Self::Properties) -> ShouldRender {
 		let old_id = self.character_id;
-		//self.CharacterId = props.CharacterId;
-		//self.character = None;
-		//self.worker.send(Request::GetAvailableChar(props.CharacterId));
 		self.worker.send(Request::SwitchSubscribedCharacter(old_id,props.character_id));
 		true
 	}
