@@ -10,10 +10,10 @@ pub fn ensure_all_some_chars(maybe_chars : &[MaybeCharWithId] ) -> Option<Vec<Ch
 			return None;
 		}
 	}
-	return Some(vec);
+	Some(vec)
 
 }
-pub fn ensure_all_some<T>(vec : &Vec<Option<T>>) -> Option<Vec<T>> where
+pub fn ensure_all_some<T>(vec : &[Option<T>]) -> Option<Vec<T>> where
 	T : Clone
 {
 	let mut new_vec : Vec<T> = Vec::new();
@@ -24,5 +24,5 @@ pub fn ensure_all_some<T>(vec : &Vec<Option<T>>) -> Option<Vec<T>> where
 			return None;
 		}
 	}
-	return Some(new_vec);
+	Some(new_vec)
 }
