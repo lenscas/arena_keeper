@@ -35,10 +35,10 @@ impl Component for SideCharDisplay
 	type Message = Msg;
 	type Properties = Props;
 	fn create(props: Self::Properties, mut link:  ComponentLink<Self>) -> Self {
-		let fight_callback = link.send_back(|res| Msg::UpdateFights(res));
+		let fight_callback = link.send_back(Msg::UpdateFights);
 		let fight_worker = fight_agent::Worker::bridge(fight_callback);
 
-		let character_callback = link.send_back(|res| Msg::UpdateCharacter(res));
+		let character_callback = link.send_back(Msg::UpdateCharacter);
 		let character_worker = character_agent::Worker::bridge(character_callback);
 
 

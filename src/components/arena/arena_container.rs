@@ -31,7 +31,7 @@ impl Component for Arena
 	type Message = Msg;
 	type Properties = Props;
 	fn create(_props: Self::Properties, mut link:  ComponentLink<Self>) -> Self {
-		let callback = link.send_back(|res| Msg::UpdateFights(res));
+		let callback = link.send_back(Msg::UpdateFights);
 		let worker = fight_agent::Worker::bridge(callback);
 
 		let mut ar = Arena {

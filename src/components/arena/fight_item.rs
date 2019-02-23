@@ -44,10 +44,10 @@ impl Component for FightItem
 	type Message = Msg;
 	type Properties = Props;
 	fn create(props: Self::Properties, mut link:  ComponentLink<Self>) -> Self {
-		let fight_callback = link.send_back(|res| Msg::UpdateFights(res));
+		let fight_callback = link.send_back(Msg::UpdateFights);
 		let fight_worker = fight_agent::Worker::bridge(fight_callback);
 
-		let char_callback = link.send_back(|res| Msg::UpdateCharacter(res));
+		let char_callback = link.send_back(Msg::UpdateCharacter);
 		let char_worker = character_agent::Worker::bridge(char_callback);
 		let mut fight_item = FightItem {
 			chars : None,
