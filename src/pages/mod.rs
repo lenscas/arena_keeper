@@ -1,2 +1,2 @@
 pub mod index;
-pub mod shop;
+pub mod shop_window;

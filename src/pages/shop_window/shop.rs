@@ -2,7 +2,7 @@ use crate::agents::character_agent::CharacterId;
 use crate::agents::character_agent;
 use crate::agents::money_agent;
 
-use crate::pages::shop::new_character_item::CharacterListItem;
+use crate::pages::shop_window::new_character_item::CharacterListItem;
 use crate::agents::router;
 use crate::generated::routes::Windows;
 //use crate::classes::character::Character;
@@ -41,12 +41,12 @@ impl Component for Shop {
 
 	fn create(_props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
-		let money_callback = link.send_back(|res| Msg::NewMoney(res));
+		let money_callback = link.send_back(Msg::NewMoney);
 		let money_worker = money_agent::Worker::bridge(money_callback);
-		let character_agent_callback = link.send_back(|ids| Msg::GetList(ids));
+		let character_agent_callback = link.send_back(Msg::GetList);
 		let character_worker = character_agent::Worker::bridge(character_agent_callback);
 
-		let route_callback = link.send_back(|res| Msg::Router(res));
+		let route_callback = link.send_back(Msg::Router);
 		let route_worker = router::Worker::bridge(route_callback);
 		let mut new_char = Shop {
 			money_left : 0,

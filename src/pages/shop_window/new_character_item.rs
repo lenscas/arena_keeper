@@ -38,7 +38,7 @@ impl Component for CharacterListItem {
 	type Properties = Props;
 
 	fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-		let callback = link.send_back(|res| Msg::Response(res));
+		let callback = link.send_back(Msg::Response);
 		let worker = Worker::bridge(callback);
 
 		let mon_callback = link.send_back(|_| Msg::Money);
