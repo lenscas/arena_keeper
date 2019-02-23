@@ -1,8 +1,8 @@
 use crate::generated::create_description::generate_description;
 use crate::generated::create_name::generate_name;
 use crate::generated::species_types::SpeciesTypes;
-use crate::generated::create_type::generate_type;
-use crate::generated::genereate_image::generate_image;
+use crate::generated::generate_type::generate_type;
+use crate::generated::generate_image::generate_image;
 
 #[derive(Eq,Hash,PartialEq,Clone,Serialize, Deserialize,Debug)]
 pub struct Character {

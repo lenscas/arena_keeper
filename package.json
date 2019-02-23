@@ -6,8 +6,6 @@
   "author": "lenscas <lenscas@gmail.com>",
   "license": "MIT",
   "scripts" : {
-    "gen_species" : "nodejs ./scripts/gen_species.js",
-    "gen_routes"  : "nodejs ./scripts/gen_routes.js",
-    "gen_window"  : "nodejs ./scripts/gen_window.js"
+    "gen" : "nodejs ./scripts/generate.js"
   }
 }
