@@ -1,5 +1,7 @@
 const fs = require('fs');
 const windowName = process.argv[2]
+const folderName = windowName + "_window"
+
 
 const template = fs.readFileSync(__dirname+"/templates/window.rs","utf-8")
 
@@ -10,9 +12,9 @@ const asArr = __dirname.split("/")
 asArr.pop()
 asArr.push("src")
 asArr.push("pages")
-fs.mkdirSync(asArr.join("/")+ "/"+windowName)
-fs.appendFileSync(asArr.join("/")+"/mod.rs","\npub mod "+windowName+";\n");
-asArr.push(windowName)
+fs.mkdirSync(asArr.join("/")+ "/"+folderName)
+fs.appendFileSync(asArr.join("/")+"/mod.rs","\npub mod "+folderName+";\n");
+asArr.push(folderName)
 fs.writeFileSync(asArr.join("/")+"/mod.rs", "pub mod "+windowName+";\n")
 fs.writeFileSync(asArr.join("/")+"/"+windowName+".rs",filledIn)
 

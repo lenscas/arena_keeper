@@ -29,7 +29,7 @@ impl Component for {{WINDOW_NAME_CAPS}} {
 	type Properties = Props;
 
 	fn create(_props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-		let route_callback = link.send_back(|res| Msg::Router(res));
+		let route_callback = link.send_back(Msg::Router);
 		let route_worker = router::Worker::bridge(route_callback);
 		{{WINDOW_NAME_CAPS}} {
 			route_worker,
