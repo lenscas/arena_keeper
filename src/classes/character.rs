@@ -17,9 +17,9 @@ pub struct Character {
 impl Character {
 	pub fn create_character() -> Character {
 		let species = generate_type();
-		let name = generate_name(&species);
-		let image = generate_image(&species);
-		let description = generate_description(&species);
+		let name = generate_name(species);
+		let image = generate_image(species);
+		let description = generate_description(species);
 		Character {
 			char_type : species,
 			name : name,
