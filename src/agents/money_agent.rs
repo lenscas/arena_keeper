@@ -62,16 +62,16 @@ impl Agent for Worker {
 	fn handle(&mut self, msg: Self::Input, _who: HandlerId) {
 		match msg {
 			Request::AddAmount(to_add) => {
-				self.money = self.money + to_add;
+				self.money += to_add;
 			},
 			Request::SubtractAmount(to_subtract) => {
-				self.money = self.money - to_subtract;
+				self.money -= to_subtract;
 			},
 			Request::BuyCharacter(char_id) => {
 				if self.money < 100 {
 					return;
 				}
-				self.money = self.money - 100;
+				self.money -= 100;
 				self.char_worker.send(character_agent::Request::BuyCharacter(char_id));
 			}
 		};

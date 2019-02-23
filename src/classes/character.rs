@@ -17,12 +17,12 @@ pub struct Character {
 impl Character {
 	pub fn create_character() -> Character {
 		let species = generate_type();
-		let name = generate_name(&species);
-		let image = generate_image(&species);
-		let description = generate_description(&species);
+		let name = generate_name(species);
+		let image = generate_image(species);
+		let description = generate_description(species);
 		Character {
 			char_type : species,
-			name : name,
+			name,
 			max_health : 100,
 			cur_health :100,
 			image,
@@ -32,7 +32,7 @@ impl Character {
 	}
 	pub fn update(&mut self) -> bool {
 		if self.cur_health < 100 && self.cur_health > 0 && !self.is_fighting {
-			self.cur_health = self.cur_health + 5;
+			self.cur_health += 5;
 			if self.cur_health > 100 {
 				self.cur_health = 100;
 			}

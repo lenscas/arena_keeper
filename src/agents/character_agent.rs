@@ -138,7 +138,7 @@ impl Agent for Worker {
                     }
                 }
                 for v in to_update.iter() {
-                    self.update_char(v);
+                    self.update_char(*v);
                 }
             }
         }
@@ -148,10 +148,10 @@ impl Agent for Worker {
     fn handle(&mut self, msg: Self::Input, who: HandlerId) {
         match msg {
             Request::SwitchSubscribedCharacter(old_char_id,new_char_id) => {
-                self.switch_subscibed_char(&who, &old_char_id, &new_char_id,false);
+                self.switch_subscibed_char(who, old_char_id, new_char_id,false);
             },
             Request::SwitchSubscribedAvailableCharacter(old_char_id,new_char_id) => {
-                self.switch_subscibed_char(&who, &old_char_id, &new_char_id,true);
+                self.switch_subscibed_char(who, old_char_id, new_char_id,true);
             },
             Request::UpdateMultipleCharacters(multiple_characters) => {
                 for character in multiple_characters {
@@ -170,7 +170,7 @@ impl Agent for Worker {
                     self.chosen_characters.remove(&character.id);
                     self.update_char_list(&self.subbed_to_char_list, &self.chosen_characters);
                 }
-                self.update_char(&character.id);
+                self.update_char(character.id);
             },
             Request::BuyCharacter(id) => {
                 let m_chara = self.to_be_chosen.remove(&id);
@@ -192,7 +192,7 @@ impl Agent for Worker {
                 let m_chara = self.chosen_characters.get(&char_id);
                 if let Some(chara) = m_chara {
                     self.link.response(who, Response::AnswerSingleChar(MaybeCharWithId::create_from_ref(char_id, chara)));
-                    let map = self.subbed_to_single_char.entry(char_id).or_insert(HashSet::new());
+                    let map = self.subbed_to_single_char.entry(char_id).or_insert_with(HashSet::new);
                     map.insert(who);
                 }
             },
@@ -208,7 +208,7 @@ impl Agent for Worker {
                 let m_chara = self.to_be_chosen.get(&char_id);
                 if let Some(chara) = m_chara {
                     self.link.response(who, Response::AnswerSingleChar(MaybeCharWithId::create_from_ref(char_id, chara)));
-                    let map = self.subbed_to_single_available_char.entry(char_id).or_insert(HashSet::new());
+                    let map = self.subbed_to_single_available_char.entry(char_id).or_insert_with(HashSet::new);
                     map.insert(who);
                 }
             },
@@ -217,7 +217,7 @@ impl Agent for Worker {
                     .iter()
                     .map(
                         |v|
-                        self.get_char_and_sub(v, who)
+                        self.get_char_and_sub(*v, who)
                     ).collect();
                 self.link.response(who, Response::AnswerMultipleChars(chars));
             },
@@ -237,28 +237,28 @@ impl Agent for Worker {
     fn name_of_resource() -> &'static str { "bin/native_worker.js" }
 }
 impl Worker {
-    fn switch_subscibed_char(&mut self, sub : &HandlerId, old_char_id : &CharacterId, new_char_id : &CharacterId,use_available : bool) {
+    fn switch_subscibed_char(&mut self, sub : HandlerId, old_char_id : CharacterId, new_char_id : CharacterId,use_available : bool) {
         let sub_list : &mut HashMap<CharacterId,HashSet<HandlerId>>;
-        let char_list : & IndexMap<CharacterId,Character>;
+        let char_list : & IndexMap<CharacterId,Character> =
         if use_available {
             sub_list = &mut self.subbed_to_single_available_char;
-            char_list = &self.to_be_chosen;
+            &self.to_be_chosen
         } else {
             sub_list = &mut self.subbed_to_single_char;
-            char_list = &self.chosen_characters;
-        }
-        let m_sub_list = sub_list.get_mut(old_char_id);
+            &self.chosen_characters
+        };
+        let m_sub_list = sub_list.get_mut(&old_char_id);
         if let Some(sub_list) = m_sub_list {
             sub_list.remove(&sub);
         }
-        sub_list.entry(new_char_id.to_owned()).or_insert(HashSet::new()).insert(sub.to_owned());
-        self.respond_with_single_char(sub, &new_char_id, &char_list);
+        sub_list.entry(new_char_id.to_owned()).or_insert_with(HashSet::new).insert(sub.to_owned());
+        self.respond_with_single_char(sub, new_char_id, &char_list);
     }
-    fn respond_with_single_char(&self, sub :&HandlerId, char_id : &CharacterId, id_list : &IndexMap<CharacterId,Character>) {
-        let m_chara = id_list.get(char_id);
-        self.link.response(sub.to_owned(), Response::AnswerSingleChar( MaybeCharWithId::create_from_maybe(*char_id, m_chara.cloned())));
+    fn respond_with_single_char(&self, sub :HandlerId, char_id : CharacterId, id_list : &IndexMap<CharacterId,Character>) {
+        let m_chara = id_list.get(&char_id);
+        self.link.response(sub.to_owned(), Response::AnswerSingleChar( MaybeCharWithId::create_from_maybe(char_id, m_chara.cloned())));
     }
-    fn send_list(&self,sub : &HandlerId, id_list : &IndexMap<CharacterId,Character>){
+    fn send_list(&self,sub : HandlerId, id_list : &IndexMap<CharacterId,Character>){
         let as_vec = id_list
             .iter()
             .map( |v| v.0.to_owned() )
@@ -267,21 +267,21 @@ impl Worker {
     }
     fn update_char_list(&self, sub_list : &HashSet<HandlerId>, id_list : &IndexMap<CharacterId,Character>){
         for sub in sub_list.iter() {
-            self.send_list(sub, id_list);
+            self.send_list(*sub, id_list);
         }
     }
-    fn update_char (&self, char_id : &CharacterId){
-        if let Some(subs) = self.subbed_to_single_char.get(char_id) {
+    fn update_char (&self, char_id : CharacterId){
+        if let Some(subs) = self.subbed_to_single_char.get(&char_id) {
             for sub in subs.iter() {
-                self.respond_with_single_char(sub, char_id, &self.chosen_characters);
+                self.respond_with_single_char(*sub, char_id, &self.chosen_characters);
             }
         }
     }
-    fn get_char_and_sub(&mut self, char_id : &CharacterId , who: HandlerId) -> MaybeCharWithId {
-        self.subbed_to_single_char.entry(*char_id).or_default().insert(who);
+    fn get_char_and_sub(&mut self, char_id : CharacterId , who: HandlerId) -> MaybeCharWithId {
+        self.subbed_to_single_char.entry(char_id).or_default().insert(who);
         MaybeCharWithId::create_from_maybe(
-            *char_id,
-            self.chosen_characters.get(char_id).cloned()
+            char_id,
+            self.chosen_characters.get(&char_id).cloned()
         )
     }
 }

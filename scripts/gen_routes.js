@@ -33,7 +33,7 @@ fs.writeFileSync(
 	file.replace(
 		/{{LOAD_CRATES}}/g,
 		content.map(
-			v=> "use crate::pages::"+v.toLowerCase()+"::"+v.toLowerCase()+"::"+v+";\n"
+			v=> "use crate::pages::"+v.toLowerCase()+"_window::"+v.toLowerCase()+"::"+v+";\n"
 		).join("")
 	).replace(/{{RENDER_WINDOWS}}/g,
 		content.map(

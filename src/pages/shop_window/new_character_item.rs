@@ -38,14 +38,14 @@ impl Component for CharacterListItem {
 	type Properties = Props;
 
 	fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-		let callback = link.send_back(|res| Msg::Response(res));
+		let callback = link.send_back(Msg::Response);
 		let worker = Worker::bridge(callback);
 
 		let mon_callback = link.send_back(|_| Msg::Money);
 		let mon_worker = money_agent::Worker::bridge(mon_callback);
 		let mut char_item = CharacterListItem {
 			character : None,
-			worker:worker,
+			worker,
 			character_id : props.character_id,
 			money_worker: mon_worker
 		};

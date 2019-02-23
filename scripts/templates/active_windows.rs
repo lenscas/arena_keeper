@@ -20,7 +20,7 @@ impl Component for ActiveWindows{
 	type Properties = ();
 
 	fn create(_: Self::Properties, mut link: ComponentLink<Self> ) -> Self {
-		let callback = link.send_back(|route| Msg::HandleWindowState(route));
+		let callback = link.send_back(Msg::HandleWindowState);
 		let router = router::Worker::bridge(callback);
 		ActiveWindows {
 			active_windows: HashSet::new(),

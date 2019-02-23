@@ -17,7 +17,7 @@ const makeBasicListPicker = (listName,funName)=> {
 	return `
 ${makeBasicHeader()}
 use crate::generated::type_to_num::type_to_num;
-pub fn generate_${funName} (specie : &SpeciesTypes) -> String {
+pub fn generate_${funName} (specie : SpeciesTypes) -> String {
 	let num = type_to_num(specie);
 	let v : Value = js!{
 		return getFromList("${listName}",@{num})
@@ -161,7 +161,7 @@ JSList = {
 		const mappedTypes = {}
 		const str=`
 use crate::generated::species_types::SpeciesTypes;
-pub fn type_to_num(species_type : &SpeciesTypes) -> i32 {
+pub fn type_to_num(species_type : SpeciesTypes) -> i32 {
 	match species_type {
 		${this.types.map((v,k)=>{mappedTypes[v]=k;return "SpeciesTypes::"+v+"=>{"+k+"}"}).join(",")}
 	}

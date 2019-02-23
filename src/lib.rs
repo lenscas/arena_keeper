@@ -1,4 +1,6 @@
 #![recursion_limit="128"]
+#![allow(unknown_lints)]
+#![warn(clippy::all)]
 
 #[macro_use]
 extern crate log;
@@ -38,7 +40,7 @@ impl Component for Model{
 	type Properties = ();
 
 	fn create(_: Self::Properties, mut link: ComponentLink<Self> ) -> Self {
-		let callback = link.send_back(|route| Msg::HandleWindowState(route));
+		let callback = link.send_back(Msg::HandleWindowState);
         let router = router::Worker::bridge(callback);
 		Model {
 			_router :router,

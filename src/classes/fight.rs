@@ -15,7 +15,7 @@ pub struct Fight {
 	lethal_chance : i32
 }
 impl Fight{
-	pub fn new(lethal_chance : i32, fighters : &Vec<CharacterId>) -> Self {
+	pub fn new(lethal_chance : i32, fighters : &[CharacterId]) -> Self {
 		Fight {
 			time_left : 2,
 			has_started : false,
@@ -50,7 +50,7 @@ impl Fight{
 		if self.has_started {
 			let m_all = ensure_all_some_chars( &self.fighters);
 			if let Some(all) = m_all {
-				self.time_left = self.time_left - 1;
+				self.time_left -= 1;
 				if self.time_left <= 0 {
 					return self.calc_outcome(&all);
 				}
@@ -66,10 +66,10 @@ impl Fight{
 		let hits_char1 = get_max(self.lethal_chance + 2 ) + 1;
 		let mut total_life_lost = 0;
 		for _ in 0..hits_char1 {
-			total_life_lost = total_life_lost + get_max(self.lethal_chance + 5);
+			total_life_lost += get_max(self.lethal_chance + 5);
 		};
 		let mut new_char = character.clone();
-		new_char.cur_health = new_char.cur_health - i64::from(total_life_lost);
+		new_char.cur_health -= i64::from(total_life_lost);
 		new_char.is_fighting= !is_done;
 		if new_char.cur_health < 0 {
 			new_char.cur_health = 0
@@ -79,7 +79,7 @@ impl Fight{
 	fn calculate_money(&self) -> i64 {
 		i64::from(get_max( (self.lethal_chance + 1) * 20))
 	}
-	fn calc_outcome(&self, characters : &Vec<CharWithId> ) -> FightOutcome {
+	fn calc_outcome(&self, characters : &[CharWithId] ) -> FightOutcome {
 		let  new_characters : Vec<MaybeCharWithId> = characters
 			.iter()
 			.map(
