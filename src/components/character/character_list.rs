@@ -22,7 +22,7 @@ impl Component for CharacterList
 	type Message = Msg;
 	type Properties = ();
 	fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-		let callback = link.send_back(|req| Msg::UpdateChars(req));
+		let callback = link.send_back(Msg::UpdateChars);
 		let worker = Worker::bridge(callback);
 		let mut char_list = CharacterList {
 			characters : vec!(),

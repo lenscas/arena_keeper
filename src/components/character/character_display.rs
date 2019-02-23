@@ -41,10 +41,10 @@ impl Component for CharacterDisplay {
 	type Properties = Props;
 
 	fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-		let callback = link.send_back(|res| Msg::Update(res));
+		let callback = link.send_back(Msg::Update);
 		let worker = Worker::bridge(callback);
 
-		let fight_callback = link.send_back(|res| Msg::UpdateArena(res));
+		let fight_callback = link.send_back(Msg::UpdateArena);
 		let fight_worker = fight_agent::Worker::bridge(fight_callback);
 		let mut char_display = CharacterDisplay {
 			character : None,
@@ -73,7 +73,7 @@ impl Component for CharacterDisplay {
 
 			}
 			Msg::Click => {
-				self.arena.send(fight_agent::Request::AddAsFighter(self.character_id.clone()));
+				self.arena.send(fight_agent::Request::AddAsFighter(self.character_id));
 			}
 		}
 		true
