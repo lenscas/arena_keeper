@@ -22,7 +22,7 @@ impl Character {
 		let description = generate_description(species);
 		Character {
 			char_type : species,
-			name : name,
+			name,
 			max_health : 100,
 			cur_health :100,
 			image,

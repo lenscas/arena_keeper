@@ -26,7 +26,7 @@ impl Component for CharacterList
 		let worker = Worker::bridge(callback);
 		let mut char_list = CharacterList {
 			characters : vec!(),
-			worker:worker
+			worker
 		};
 		char_list.worker.send(Request::GetIdList);
 		char_list

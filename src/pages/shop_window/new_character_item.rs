@@ -45,7 +45,7 @@ impl Component for CharacterListItem {
 		let mon_worker = money_agent::Worker::bridge(mon_callback);
 		let mut char_item = CharacterListItem {
 			character : None,
-			worker:worker,
+			worker,
 			character_id : props.character_id,
 			money_worker: mon_worker
 		};

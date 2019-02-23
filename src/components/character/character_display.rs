@@ -48,7 +48,7 @@ impl Component for CharacterDisplay {
 		let fight_worker = fight_agent::Worker::bridge(fight_callback);
 		let mut char_display = CharacterDisplay {
 			character : None,
-			worker:worker,
+			worker,
 			arena:fight_worker,
 			character_id: props.character_id
 		};
