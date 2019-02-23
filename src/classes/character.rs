@@ -32,7 +32,7 @@ impl Character {
 	}
 	pub fn update(&mut self) -> bool {
 		if self.cur_health < 100 && self.cur_health > 0 && !self.is_fighting {
-			self.cur_health = self.cur_health + 5;
+			self.cur_health += 5;
 			if self.cur_health > 100 {
 				self.cur_health = 100;
 			}
