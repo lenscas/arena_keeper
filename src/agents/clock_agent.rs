@@ -57,7 +57,7 @@ impl Agent for Worker {
     fn update(&mut self, msg: Self::Message) {
         match msg {
             Msg::Updating => {
-                self.update_count = self.update_count + 1;
+                self.update_count +=  1;
                 for sub in self.component_list.iter(){
                     self.link.response(*sub, Response::Answer(self.update_count));
                 }

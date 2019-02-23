@@ -61,7 +61,7 @@ impl Agent for Worker {
 
 	// Create an instance with a link to agent's environment.
 	fn create(link: AgentLink<Self>) -> Self {
-		let character_agent_callback = link.send_back(|res| Msg::UpdateCharacter(res));
+		let character_agent_callback = link.send_back(Msg::UpdateCharacter);
 		let character_worker = character_agent::Worker::bridge(character_agent_callback);
 
 		let money_agent_callback = link.send_back(|_| Msg::Res);
@@ -146,18 +146,16 @@ impl Agent for Worker {
 			Request::AddAsFighter(char_id) => {
 				info!("Add fighter");
 				let len = self.selected_fighters.len();
-				if len < 2 {
-					&self.selected_fighters.push(char_id);
-				} else {
+				if len > 2 {
 					self.selected_fighters.remove(0);
-					self.selected_fighters.push(char_id);
-				}
+				};
+				self.selected_fighters.push(char_id);
 				self.send_update_fighters(self.selected_fighters.iter().map(|v| Some(*v)).collect()) ;
 			},
 			Request::CreateFight(lethal_chance) => {
 				if self.selected_fighters.len() >= 2 {
 					let fight = Fight::new(lethal_chance, &self.selected_fighters);
-					self.current_id = self.current_id + 1;
+					self.current_id += 1;
 					let fight_id= FightId {0:self.current_id};
 					self.fights.insert(fight_id, fight);
 					if self.fights.len() == 1 {
