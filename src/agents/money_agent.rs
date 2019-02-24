@@ -1,3 +1,4 @@
+use crate::funcs::random::get_max;
 use std::collections::HashMap;
 use crate::classes::character::Character;
 use indexmap::IndexMap;
@@ -5,6 +6,7 @@ use std::collections::HashSet;
 use yew::prelude::worker::*;
 
 use crate::agents::character_agent;
+use crate::agents::clock_agent;
 
 pub struct Worker {
 	link: AgentLink<Worker>,
@@ -12,9 +14,11 @@ pub struct Worker {
 	char_worker: Box<Bridge<character_agent::Worker>>,
 	money: i64,
 	available : IndexMap< character_agent::CharacterId,Character>,
-	_current_id : u64,
+	current_id : u64,
 	subbed_to_char_list : HashSet<HandlerId>,
 	subbed_to_single_char :HashMap<character_agent::CharacterId,HashSet<HandlerId>>,
+	_clock_worker: Box<Bridge<clock_agent::Worker>>,
+	time_until_refil : i32
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,7 +43,8 @@ pub enum Response {
 impl Transferable for Response {}
 
 pub enum Msg {
-	Res
+	Res,
+	Tick
 }
 
 impl Agent for Worker {
@@ -56,15 +61,19 @@ impl Agent for Worker {
 	fn create(link: AgentLink<Self>) -> Self {
 		let character_agent_callback = link.send_back(|_| Msg::Res);
 		let character_worker = character_agent::Worker::bridge(character_agent_callback);
+		let clock_agent_callback = link.send_back(|_| Msg::Tick);
+		let clock_worker = clock_agent::Worker::bridge(clock_agent_callback);
 		let mut agent = Worker {
 			link,
 			component_list: HashSet::new(),
 			money: 200,
 			char_worker: character_worker,
 			available: IndexMap::new(),
-			_current_id : 3,
+			current_id : 3,
 			subbed_to_char_list : HashSet::new(),
 			subbed_to_single_char : HashMap::new(),
+			_clock_worker : clock_worker,
+			time_until_refil: 5
 		};
 		agent.available.insert(character_agent::CharacterId { 0:1}, Character::create_character());
 		agent.available.insert(character_agent::CharacterId { 0:2}, Character::create_character());
@@ -76,7 +85,21 @@ impl Agent for Worker {
 		self.link.response(id, Response::NewAmount(self.money));
 	}
 	// Handle inner messages (of services of `send_back` callbacks)
-	fn update(&mut self, _msg: Self::Message) {}
+	fn update(&mut self, msg: Self::Message) {
+		if let Msg::Tick = msg {
+			info!("In tick?");
+			info!("{} {}",self.available.len(), self.time_until_refil);
+			if self.available.len() < 3 && self.time_until_refil == 0  {
+				info!("In if");
+				self.current_id += 1;
+				self.available.insert(character_agent::CharacterId { 0:1}, Character::create_character());
+				self.time_until_refil = get_max(10);
+				self.update_list_to_all();
+			} else {
+				self.time_until_refil -=1;
+			}
+		}
+	}
 
 	// Handle incoming messages from components of other agents.
 	fn handle(&mut self, msg: Self::Input, who: HandlerId) {
@@ -94,10 +117,7 @@ impl Agent for Worker {
 					}
 					self.money -= 100;
 					self.char_worker.send(character_agent::Request::InsertCharacter(character));
-					let as_vec = self.get_list_as_vec();
-					for sub in &self.subbed_to_char_list {
-						self.link.response(*sub, Response::AnswerIdList(as_vec.clone()));
-					}
+					self.update_list_to_all();
 				}
 			},
 			Request::GetCharacter(char_id) => {
@@ -127,6 +147,12 @@ impl Agent for Worker {
 	}
 }
 impl Worker {
+	fn update_list_to_all(&self) {
+		let as_vec = self.get_list_as_vec();
+		for sub in &self.subbed_to_char_list {
+			self.link.response(*sub, Response::AnswerIdList(as_vec.clone()));
+		}
+	}
 	fn get_list_as_vec(&self) -> Vec<character_agent::CharacterId> {
 		self.available
 			.iter()
