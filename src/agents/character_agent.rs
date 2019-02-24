@@ -48,31 +48,28 @@ impl MaybeCharWithId {
 }
 
 pub struct Worker {
-    link: AgentLink<Worker>,
-    component_list : HashSet<HandlerId>,
+	link: AgentLink<Worker>,
+	component_list : HashSet<HandlerId>,
 	subbed_to_char_list : HashSet<HandlerId>,
 	subbed_to_single_char :HashMap<CharacterId,HashSet<HandlerId>>,
-    subbed_to_single_available_char : HashMap<CharacterId,HashSet<HandlerId>>,
-    subbed_to_available_list : HashSet<HandlerId>,
 	chosen_characters : IndexMap<CharacterId,Character>,
-	to_be_chosen : IndexMap<CharacterId,Character>,
-    _clock_worker: Box<Bridge<clock_agent::Worker>>,
+	_clock_worker: Box<Bridge<clock_agent::Worker>>,
+	current_id : u64
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Request {
     SetCharacterAsFighting(CharacterId),
     SetCharacterAsNotFighting(CharacterId),
-    SwitchSubscribedAvailableCharacter(CharacterId,CharacterId),
     SwitchSubscribedCharacter(CharacterId,CharacterId),
     UpdateCharacter(MaybeCharWithId),
     UpdateMultipleCharacters(Vec<MaybeCharWithId>),
-    BuyCharacter(CharacterId),
+    InsertCharacter(Character),
     GetCharacter(CharacterId),
     GetMultipleCharacters(Vec<CharacterId>),
-    GetAvailableChar(CharacterId),
+    //GetAvailableChar(CharacterId),
     GetIdList,
-    GetAvailableList,
+    //GetAvailableList,
 }
 
 impl Transferable for Request { }
@@ -102,22 +99,20 @@ impl Agent for Worker {
     fn create(link: AgentLink<Self>) -> Self {
         let clock_agent_callback = link.send_back(|_| Msg::Tick);
 		let clock_worker = clock_agent::Worker::bridge(clock_agent_callback);
-
-        let mut agent = Worker {
+        Worker {
             link,
             component_list : HashSet::new(),
 			subbed_to_char_list : HashSet::new(),
 			subbed_to_single_char : HashMap::new(),
 			chosen_characters : IndexMap::new(),
-			to_be_chosen : IndexMap::new(),
-            subbed_to_available_list : HashSet::new(),
-            subbed_to_single_available_char : HashMap::new(),
             _clock_worker : clock_worker,
-		};
+            current_id : 0
+		}
+		/*
 		agent.to_be_chosen.insert(CharacterId { 0:1}, Character::create_character());
 		agent.to_be_chosen.insert(CharacterId { 0:2}, Character::create_character());
 		agent.to_be_chosen.insert(CharacterId { 0:3}, Character::create_character());
-        agent
+        */
     }
     fn connected(&mut self , id: HandlerId){
         self.component_list.insert(id);
@@ -148,10 +143,7 @@ impl Agent for Worker {
     fn handle(&mut self, msg: Self::Input, who: HandlerId) {
         match msg {
             Request::SwitchSubscribedCharacter(old_char_id,new_char_id) => {
-                self.switch_subscibed_char(who, old_char_id, new_char_id,false);
-            },
-            Request::SwitchSubscribedAvailableCharacter(old_char_id,new_char_id) => {
-                self.switch_subscibed_char(who, old_char_id, new_char_id,true);
+                self.switch_subscibed_char(who, old_char_id, new_char_id);
             },
             Request::UpdateMultipleCharacters(multiple_characters) => {
                 for character in multiple_characters {
@@ -172,13 +164,10 @@ impl Agent for Worker {
                 }
                 self.update_char(character.id);
             },
-            Request::BuyCharacter(id) => {
-                let m_chara = self.to_be_chosen.remove(&id);
-                if let Some(chara) = m_chara {
-                    self.chosen_characters.insert(id, chara);
-                    self.update_char_list(&self.subbed_to_available_list, &self.to_be_chosen);
-                    self.update_char_list(&self.subbed_to_char_list, &self.chosen_characters);
-                }
+            Request::InsertCharacter(new_character) => {
+				self.current_id += 1;
+                self.chosen_characters.insert( CharacterId {0:self.current_id}, new_character);
+                self.update_char_list(&self.subbed_to_char_list, &self.chosen_characters);
             },
             Request::GetIdList => {
                 let as_vec = self.chosen_characters
@@ -196,6 +185,7 @@ impl Agent for Worker {
                     map.insert(who);
                 }
             },
+            /*
             Request::GetAvailableList => {
                 let as_vec = self.to_be_chosen
                     .iter()
@@ -212,6 +202,7 @@ impl Agent for Worker {
                     map.insert(who);
                 }
             },
+            */
             Request::GetMultipleCharacters(char_ids) => {
                 let chars : Vec<MaybeCharWithId> = char_ids
                     .iter()
@@ -237,22 +228,23 @@ impl Agent for Worker {
     fn name_of_resource() -> &'static str { "bin/native_worker.js" }
 }
 impl Worker {
-    fn switch_subscibed_char(&mut self, sub : HandlerId, old_char_id : CharacterId, new_char_id : CharacterId,use_available : bool) {
-        let sub_list : &mut HashMap<CharacterId,HashSet<HandlerId>>;
-        let char_list : & IndexMap<CharacterId,Character> =
-        if use_available {
-            sub_list = &mut self.subbed_to_single_available_char;
-            &self.to_be_chosen
+    fn switch_subscibed_char(&mut self, sub : HandlerId, old_char_id : CharacterId, new_char_id : CharacterId) {
+        let sub_list = &mut self.subbed_to_single_char;
+        /*
+		if use_available {
+            sub_list =
+            &
         } else {
             sub_list = &mut self.subbed_to_single_char;
             &self.chosen_characters
         };
+		*/
         let m_sub_list = sub_list.get_mut(&old_char_id);
         if let Some(sub_list) = m_sub_list {
             sub_list.remove(&sub);
         }
         sub_list.entry(new_char_id.to_owned()).or_insert_with(HashSet::new).insert(sub.to_owned());
-        self.respond_with_single_char(sub, new_char_id, &char_list);
+        self.respond_with_single_char(sub, new_char_id, &self.chosen_characters);
     }
     fn respond_with_single_char(&self, sub :HandlerId, char_id : CharacterId, id_list : &IndexMap<CharacterId,Character>) {
         let m_chara = id_list.get(&char_id);
