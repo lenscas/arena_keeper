@@ -24,7 +24,8 @@ pub struct Worker {
 	char_worker: Box<Bridge<character_agent::Worker>>,
 	money_worker: Box<Bridge<money_agent::Worker>>,
 	_clock_worker: Box<Bridge<clock_agent::Worker>>,
-	busy_fight: Option<FightId>
+	busy_fight: Option<FightId>,
+	do_update : bool
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -81,7 +82,8 @@ impl Agent for Worker {
 			char_worker: character_worker,
 			money_worker,
 			_clock_worker : clock_worker,
-			busy_fight:None
+			busy_fight:None,
+			do_update : true,
 		}
 	}
 	fn connected(&mut self, id: HandlerId) {
@@ -91,19 +93,22 @@ impl Agent for Worker {
 	fn update(&mut self, msg: Self::Message) {
 		match msg {
 			Msg::Tick =>{
-				if let Some(fight_id) = &self.busy_fight {
-					if let Some(fight) = self.fights.get_mut(fight_id) {
-						let res = fight.update();
-						if res.is_done {
+				self.do_update = !self.do_update;
+				if self.do_update {
+					if let Some(fight_id) = &self.busy_fight {
+						if let Some(fight) = self.fights.get_mut(fight_id) {
+							let res = fight.update();
 							self.char_worker.send(character_agent::Request::UpdateMultipleCharacters(res.chars));
-							self.fights.remove(fight_id);
-							self.start_next(0);
-							self.money_worker.send(money_agent::Request::AddAmount(res.earned_money));
-							self.send_update_list();
+							if res.is_done {
+								self.fights.remove(fight_id);
+								self.start_next(0);
+								self.money_worker.send(money_agent::Request::AddAmount(res.earned_money));
+								self.send_update_list();
+							}
 						}
+					} else {
+						self.start_next(1);
 					}
-				} else {
-					self.start_next(1);
 				}
 			},
 			Msg::UpdateCharacter(res) => {
@@ -144,7 +149,6 @@ impl Agent for Worker {
 	fn handle(&mut self, msg: Self::Input, who: HandlerId) {
 		match msg {
 			Request::AddAsFighter(char_id) => {
-				info!("Add fighter");
 				let len = self.selected_fighters.len();
 				if len > 2 {
 					self.selected_fighters.remove(0);
@@ -202,7 +206,6 @@ impl Worker {
 		};
 		for fighter_id in fighters.iter().enumerate() {
 			for sub in self.subbed_to_selected_fighters.entry(fighter_id.0).or_default().iter() {
-				info!("Send update");
 				self.link.response(*sub, Response::UpdateFighter(*fighter_id.1));
 			}
 		}
