@@ -3,10 +3,10 @@ use yew::prelude::*;
 
 
 pub struct HealthBarProps {
-	pub max : i64,
-	pub current : i64,
-	pub break_yellow : i64,
-	pub break_red : i64
+	pub max : i32,
+	pub current : i32,
+	pub break_yellow : i32,
+	pub break_red : i32
 }
 pub fn health_bar<Comp: Component>(props : HealthBarProps) -> Html<Comp> {
 	let amount =  props.current * 100 / props.max;// * 100;

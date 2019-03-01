@@ -59,10 +59,6 @@ impl Component for CharacterListItem {
 						self.character = character.character;
 					},
 					Response::NewAmount(_) => (),
-					/*
-					Response::AnswerIdList(_) => {
-						info!("Answer id list");
-					}*/
 					_default => {
 						unreachable!();
 					}
