@@ -61,7 +61,6 @@ impl Component for SideCharDisplay
 			Msg::UpdateFights(res) => {
 				match res {
 					fight_agent::Response::UpdateFighter(new_char) => {
-						info!("Got fighter update");
 						if let Some(chara) = new_char {
 							if let Some(old_char) = self.char_id {
 								self.character_worker.send(character_agent::Request::SwitchSubscribedCharacter(old_char,chara));

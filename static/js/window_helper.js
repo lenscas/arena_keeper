@@ -1,10 +1,8 @@
 
 $("html").on("mousedown","#active",function(e) {
-	console.log("Awesome!")
 	dragMouseDown(e)
 })
 $("html").on("mousedown","#window-header",function(e) {
-	console.log("Awesome2!")
 	$(".window").removeAttr('id')
 	$(e.target).closest(".window").attr("id","active")
 	dragMouseDown(e)
@@ -36,7 +34,6 @@ function dragMouseDown(e) {
 		pos3 = e.clientX;
 		pos4 = e.clientY;
 		// set the element's new position:
-		console.log(pos1,pos2,pos3,pos4)
 		elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
 		elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
 	}

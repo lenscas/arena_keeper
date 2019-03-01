@@ -87,13 +87,10 @@ impl Agent for Worker {
 	// Handle inner messages (of services of `send_back` callbacks)
 	fn update(&mut self, msg: Self::Message) {
 		if let Msg::Tick = msg {
-			info!("In tick?");
-			info!("{} {}",self.available.len(), self.time_until_refil);
 			if self.available.len() < 3 && self.time_until_refil == 0  {
-				info!("In if");
 				self.current_id += 1;
 				self.available.insert(character_agent::CharacterId { 0:1}, Character::create_character());
-				self.time_until_refil = get_max(10);
+				self.time_until_refil = get_max(250);
 				self.update_list_to_all();
 			} else {
 				self.time_until_refil -=1;

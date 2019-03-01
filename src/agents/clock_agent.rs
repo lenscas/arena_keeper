@@ -39,7 +39,7 @@ impl Agent for Worker {
     // Create an instance with a link to agent's environment.
     fn create(link: AgentLink<Self>) -> Self {
         let mut interval = IntervalService::new();
-        let duration = Duration::from_secs(3);
+        let duration = Duration::from_millis(50); //we want to trigger it 20 times a second. 1 second =1000 millis, 1000/20 = 50
         let callback = link.send_back(|_| Msg::Updating);
         let task = interval.spawn(duration, callback);
         Worker {

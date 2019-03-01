@@ -54,7 +54,8 @@ pub struct Worker {
 	subbed_to_single_char :HashMap<CharacterId,HashSet<HandlerId>>,
 	chosen_characters : IndexMap<CharacterId,Character>,
 	_clock_worker: Box<Bridge<clock_agent::Worker>>,
-	current_id : u64
+	current_id : u64,
+    do_update: bool
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -106,7 +107,8 @@ impl Agent for Worker {
 			subbed_to_single_char : HashMap::new(),
 			chosen_characters : IndexMap::new(),
             _clock_worker : clock_worker,
-            current_id : 0
+            current_id : 0,
+            do_update : true
 		}
 		/*
 		agent.to_be_chosen.insert(CharacterId { 0:1}, Character::create_character());
@@ -126,15 +128,19 @@ impl Agent for Worker {
                 }
             },
             Msg::Tick=> {
-                let mut to_update : Vec<CharacterId> = vec!();
-                for v in self.chosen_characters.iter_mut() {
-                    if v.1.update() {
-                        to_update.push(*v.0);
+                self.do_update = !self.do_update;
+                if self.do_update {
+                    let mut to_update : Vec<CharacterId> = vec!();
+                    for v in self.chosen_characters.iter_mut() {
+                        if v.1.update() {
+                            to_update.push(*v.0);
+                        }
+                    }
+                    for v in to_update.iter() {
+                        self.update_char(*v);
                     }
                 }
-                for v in to_update.iter() {
-                    self.update_char(*v);
-                }
+
             }
         }
      }
