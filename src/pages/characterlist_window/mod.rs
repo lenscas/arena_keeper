@@ -1,2 +1,2 @@
-pub mod character_list;
+pub mod characterlist;
 pub mod single_character;

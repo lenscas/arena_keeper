@@ -62,7 +62,7 @@ impl Renderable<Model> for Model{
 			<>
 				<nav class=("navbar","navbar-expand-lg", "navbar-dark", "bg-dark"), id="mainNav",>
 					<span class="navbar-brand",>{"Arena keeper"}</span>
-					<Link: 
+					<Link:
 						action=ActivateWindow(Windows::CharacterList),
 						class="btn btn-success",
 						text="Shop",

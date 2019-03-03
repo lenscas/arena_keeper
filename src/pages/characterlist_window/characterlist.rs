@@ -1,4 +1,4 @@
-use crate::pages::character_list_window::single_character::CharacterListItem;
+use crate::pages::characterlist_window::single_character::CharacterListItem;
 use crate::agents::character_agent::CharacterId;
 use crate::agents::router;
 use crate::generated::routes;
@@ -37,7 +37,7 @@ impl Component for CharacterList {
 	fn create(_props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 		let route_callback = link.send_back(Msg::Router);
 		let route_worker = router::Worker::bridge(route_callback);
-		
+
 		let character_worker = character_agent::Worker::bridge(
 			link.send_back(Msg::Characters)
 		);
