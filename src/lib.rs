@@ -65,7 +65,12 @@ impl Renderable<Model> for Model{
 					<Link:
 						action=ActivateWindow(Windows::CharacterList),
 						class="btn btn-success",
-						text="Shop",
+						text="Characters",
+					/>
+					<Link:
+						action=ActivateWindow(Windows::Arena),
+						class="btn btn-success",
+						text="Arena",
 					/>
 				</nav>
 				{index()}
