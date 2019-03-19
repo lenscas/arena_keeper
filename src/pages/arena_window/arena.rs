@@ -1,7 +1,7 @@
 use crate::agents::router;
 use crate::generated::routes;
 use crate::agents::fight_agent;
-use crate::components::arena::arena_container;
+use crate::pages::arena_window::arena_container;
 use yew::prelude::*;
 
 pub struct Arena {

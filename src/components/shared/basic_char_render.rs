@@ -1,5 +1,5 @@
-use crate::components::character::health_bar::HealthBarProps;
-use crate::components::character::health_bar::health_bar;
+use crate::components::shared::health_bar::HealthBarProps;
+use crate::components::shared::health_bar::health_bar;
 use crate::classes::character::Character;
 use yew::prelude::*;
 

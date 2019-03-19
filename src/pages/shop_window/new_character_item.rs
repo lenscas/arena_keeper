@@ -1,6 +1,6 @@
 use crate::agents::character_agent::CharacterId;
-use crate::components::character::health_bar::HealthBarProps;
-use crate::components::character::health_bar::health_bar;
+use crate::components::shared::health_bar::HealthBarProps;
+use crate::components::shared::health_bar::health_bar;
 use yew::prelude::*;
 
 use crate::classes::character::Character;

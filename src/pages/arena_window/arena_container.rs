@@ -1,5 +1,5 @@
-use crate::components::arena::fight_item::FightItem;
-use crate::components::arena::fight_creation_char_display::SideCharDisplay;
+use crate::pages::arena_window::fight_item::FightItem;
+use crate::pages::arena_window::fight_creation_char_display::SideCharDisplay;
 use crate::agents::fight_agent;
 use stdweb::traits::IEvent;
 use yew::prelude::*;
