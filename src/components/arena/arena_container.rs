@@ -74,10 +74,12 @@ impl Renderable<Arena> for Arena
 {
 	fn view(&self) -> Html<Self> {
 		html! {
+			/*
 			<div class=("card","h-100"),>
 				<div class=("card-header","h-10"),>
 					<h1>{"Fights"}</h1>
 				</div>
+			*/
 				<ul class=("list-group","list-item-flush","h-90", "scrollBar"),>
 					{self.render_fight_planner()}
 					{for self.fights.iter().map(
@@ -86,7 +88,7 @@ impl Renderable<Arena> for Arena
 						}
 					)}
 				</ul>
-			</div>
+			//</div>
 		}
 	}
 }

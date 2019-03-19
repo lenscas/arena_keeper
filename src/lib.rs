@@ -13,7 +13,10 @@ extern crate serde_derive;
 extern crate yew;
 extern crate indexmap;
 
+use crate::components::shared::link::Link;
 use crate::generated::active_windows::ActiveWindows;
+use crate::agents::router::Request::ActivateWindow;
+use crate::generated::routes::Windows;
 use crate::pages::index::index;
 
 use yew::prelude::*;
@@ -59,6 +62,16 @@ impl Renderable<Model> for Model{
 			<>
 				<nav class=("navbar","navbar-expand-lg", "navbar-dark", "bg-dark"), id="mainNav",>
 					<span class="navbar-brand",>{"Arena keeper"}</span>
+					<Link:
+						action=ActivateWindow(Windows::CharacterList),
+						class="btn btn-success",
+						text="Characters",
+					/>
+					<Link:
+						action=ActivateWindow(Windows::Arena),
+						class="btn btn-success",
+						text="Arena",
+					/>
 				</nav>
 				{index()}
 				<ActiveWindows:/>
