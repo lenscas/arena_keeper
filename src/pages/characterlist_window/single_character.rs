@@ -9,13 +9,18 @@ use crate::agents::character_agent::Worker;
 use crate::agents::character_agent::Response;
 use crate::agents::character_agent::Request;
 
+use crate::agents::fight_agent;
+
 pub struct CharacterListItem {
 	character_id : CharacterId,
 	character: Option<Character>,
-	character_worker: Box<Bridge<Worker>>
+	character_worker: Box<Bridge<Worker>>,
+	arena_worker: Box<Bridge<fight_agent::Worker>>,
 }
 pub enum Msg {
 	Response(Response),
+	FromArena(fight_agent::Response),
+	Click
 }
 #[derive(PartialEq, Clone)]
 pub struct Props {
@@ -36,10 +41,14 @@ impl Component for CharacterListItem {
 		let callback = link.send_back(Msg::Response);
 		let worker = Worker::bridge(callback);
 
+		let fight_callback = link.send_back(Msg::FromArena);
+		let fight_worker = fight_agent::Worker::bridge(fight_callback);
+
 		let mut char_item = CharacterListItem {
 			character : None,
 			character_worker:worker,
 			character_id : props.character_id,
+			arena_worker : fight_worker
 		};
 		char_item.character_worker.send(Request::GetCharacter(char_item.character_id));
 		char_item
@@ -55,7 +64,9 @@ impl Component for CharacterListItem {
 						unreachable!();
 					}
 				}
-			}
+			},
+			Msg::Click =>self.arena_worker.send(fight_agent::Request::AddAsFighter(self.character_id)),
+			Msg::FromArena(_) => {unreachable!();}
 		}
 		true
 	}
@@ -75,10 +86,9 @@ impl Renderable<CharacterListItem> for CharacterListItem {
 			let max_health = character.max_health;
 			let cur_health = character.cur_health;
 			return html! {
-				<li class="list-group-item",>
+				<li class="list-group-item", onclick=|_|Msg::Click ,>
 					<div class="row",>
 						<div class="col-md-3",>
-							//<h1>{self.CharacterId}</h1>
 							<img class="img-fluid",alt={image.1}, src={image.0},/>
 						</div>
 						<div class="col",>
