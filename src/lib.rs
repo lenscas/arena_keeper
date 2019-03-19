@@ -63,15 +63,21 @@ impl Renderable<Model> for Model{
 				<nav class=("navbar","navbar-expand-lg", "navbar-dark", "bg-dark"), id="mainNav",>
 					<span class="navbar-brand",>{"Arena keeper"}</span>
 					<Link:
+						action=ActivateWindow(Windows::Shop),
+						class="btn btn-link",
+						text="Shop",
+					/>
+					<Link:
 						action=ActivateWindow(Windows::CharacterList),
-						class="btn btn-success",
+						class="btn btn-link",
 						text="Characters",
 					/>
 					<Link:
 						action=ActivateWindow(Windows::Arena),
-						class="btn btn-success",
+						class="btn btn-link",
 						text="Arena",
 					/>
+					
 				</nav>
 				{index()}
 				<ActiveWindows:/>
