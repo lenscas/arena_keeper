@@ -3,3 +3,5 @@ pub mod clock_agent;
 pub mod money_agent;
 pub mod fight_agent;
 pub mod router;
+pub mod game_agent;
+pub mod canvas_agent;
