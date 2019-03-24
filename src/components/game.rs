@@ -22,7 +22,9 @@ pub struct Game {
 	blocks : Vec<(f64,f64)>,
 	render_block : bool,
 	block_x : f64,
-	block_y : f64
+	block_y : f64,
+	start_point : Option<(f64,f64)>
+
 
 }
 
@@ -60,7 +62,8 @@ impl Component for Game {
 			_canvas_worker : canvas_worker,
 			render_block : false,
 			block_x : 0.0,
-			block_y : 0.0
+			block_y : 0.0,
+			start_point : None
 
 		}
 	}
@@ -96,11 +99,13 @@ impl Component for Game {
 						true
 					},
 					canvas_agent::Response::MouseDown => {
+						self.start_point = Some((self.block_x, self.block_y));
 						self.render_block = true;
 						true
 					},
 					canvas_agent::Response::MouseUp => {
 						self.render_block = false;
+						self.start_point = None;
 						true
 					},
 					canvas_agent::Response::MouseMove(x,y) => {
@@ -151,7 +156,26 @@ impl Renderable<Game> for Game {
 		for square in &self.blocks {
 			self.context.fill_rect(square.0, square.1, 10.0,10.0);
 		}
-
+		if let Some(start_point) = self.start_point {
+			let start_point = GRID.snap_to_grid(start_point.0,start_point.1);
+			let start_point = (
+				start_point.0, //+ (GRID.as_float() / 2.0 ),
+				start_point.1 + (GRID.as_float() / 2.0 )
+			);
+			let end_point = GRID.snap_to_grid(self.block_x,self.block_y);
+			let end_point = (
+				end_point.0 + GRID.as_float() / 2.0,
+				end_point.1 + GRID.as_float() / 2.0
+			);
+			self.context.set_stroke_style_color("rgba(0, 255, 0, 0.8)");
+			self.context.set_line_width(GRID.as_float());
+			self.context.begin_path();
+			self.context.move_to(start_point.0,start_point.1);
+			self.context.line_to(end_point.0, start_point.1);
+			self.context.line_to(end_point.0, end_point.1);
+			self.context.stroke();
+			self.context.set_stroke_style_color("#000000");
+		}
 		if self.render_block {
 			self.context.set_stroke_style_color("#ff0000");
 			self.context.set_fill_style_color("#ff0000");
