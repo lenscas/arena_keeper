@@ -1,4 +1,7 @@
-use stdweb::web::html_element::CanvasElement;
+use stdweb::web::html_element::{
+	CanvasElement,
+	ImageElement
+};
 use yew::prelude::*;
 
 use stdweb::traits::*;
@@ -10,6 +13,7 @@ use stdweb::web::{
 
 use crate::agents::game_agent;
 use crate::agents::canvas_agent;
+use crate::config::GRID;
 pub struct Game {
 	_clock_worker: Box<Bridge<game_agent::Worker>>,
 	_canvas_worker : Box<Bridge<canvas_agent::Worker>>,
@@ -100,13 +104,9 @@ impl Component for Game {
 						true
 					},
 					canvas_agent::Response::MouseMove(x,y) => {
-						if self.render_block {
-							self.block_x = x / f64::from(self.canvas.offset_width()) * 300.0;
-							self.block_y = y / f64::from(self.canvas.offset_height()) * 150.0;
-							true
-						} else {
-							false
-						}
+						self.block_x = x / f64::from(self.canvas.offset_width()) * f64::from(self.canvas.width());
+						self.block_y = y / f64::from( self.canvas.offset_height()) * f64::from(self.canvas.height());
+						self.render_block
 					},
 					canvas_agent::Response::MouseLeave => {
 						self.render_block = false;
@@ -132,13 +132,31 @@ impl Renderable<Game> for Game {
 		let canvas = self.context.get_canvas();
 
 		self.context.clear_rect(0.0,0.0, f64::from(canvas.width()) ,f64::from(canvas.height()));
-		self.blocks.iter().for_each(|block| {
-			self.context.fill_rect(block.0,block.1, 30.0, 30.0);
-		});
+		let image = ImageElement::new();
+		image.set_src("/assets/tiles/borders.png");
+		let res = image.set_attribute("style", "height:10px;width:10px");
+		if res.is_err() {
+			return html!{<></>}
+		}
+		for x in (0 .. self.canvas.width()).step_by(GRID.as_usize()) {
+			let x = f64::from(x);
+			for y in (0..self.canvas.height()).step_by(GRID.as_usize()) {
+				let fsize = GRID.as_float();
+				let res = self.context.draw_image_d(image.clone(), x, f64::from(y), fsize, fsize);
+				if res.is_err() {
+					return html!{<></>}
+				}
+			}
+		}
+		for square in &self.blocks {
+			self.context.fill_rect(square.0, square.1, 10.0,10.0);
+		}
+
 		if self.render_block {
 			self.context.set_stroke_style_color("#ff0000");
 			self.context.set_fill_style_color("#ff0000");
-			self.context.fill_rect(self.block_x -5.0 ,self.block_y - 5.0, 11.0,11.0);
+			let coords_in_grid = GRID.snap_to_grid(self.block_x,self.block_y);
+			self.context.fill_rect(coords_in_grid.0 ,coords_in_grid.1, 13.0,13.0);
 			self.context.set_stroke_style_color("#000000");
 			self.context.set_fill_style_color("#000000");
 		};

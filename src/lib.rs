@@ -27,6 +27,7 @@ pub mod classes;
 pub mod generated;
 pub mod funcs;
 pub mod pages;
+pub mod config;
 
 use crate::agents::router;
 
@@ -77,7 +78,6 @@ impl Renderable<Model> for Model{
 						class="btn btn-link",
 						text="Arena",
 					/>
-					
 				</nav>
 				{index()}
 				<ActiveWindows:/>
